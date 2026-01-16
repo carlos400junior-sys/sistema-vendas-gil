@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="max-w-7xl mx-auto px-4 py-8">
+    <!-- Cabeçalho -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Checkout de Vendas</h1>
+            <p class="text-slate-500">Gerencie produtos e emita notas rapidamente.</p>
+        </div>
+        
+        <!-- Badge Cliente -->
+        <div class="flex items-center gap-4 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl">
+                👤
+            </div>
+            <div>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cliente</span>
+                <p class="text-slate-900 font-bold block">
+                    {{ session.get('cliente_selecionado', 'Consumidor não identificado') }}
+                </p>
+            </div>
+            <a href="{{ url_for('clientes') }}" class="ml-4 p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                🔄
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- COLUNA ESQUERDA: BUSCA E RESULTADOS -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Barra de Busca -->
+            <form method="POST" class="relative group">
+                <input type="text" name="pesquisa" 
+                    class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 px-6 pl-14 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg shadow-sm"
+                    placeholder="Pesquisar peça ou serviço..." value="{{ request.form.get('pesquisa', '') }}" autofocus>
+                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-2xl">🔍</div>
+                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-all">
+                    Buscar
+                </button>
+            </form>
+
+            <!-- Tabela de Resultados -->
+            {% if pecas %}
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50/50 border-bottom border-slate-100">
+                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Produto</th>
+                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Preço</th>
+                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Quantidade</th>
+                            <th class="px-6 py-4 text-right"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        {% for peca in pecas %}
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <form action="{{ url_for('adicionar_item') }}" method="POST">
+                                <td class="px-6 py-4">
+                                    <span class="font-bold text-slate-800 block">{{ peca.nome }}</span>
+                                    <span class="text-xs text-slate-400">Estoque disponível</span>
+                                </td>
+                                <td class="px-6 py-4 font-semibold text-slate-600">R$ {{ "%.2f"|format(peca.preco) }}</td>
+                                <td class="px-6 py-4">
+                                    <input type="number" name="quantidade" value="1" min="1" 
+                                        class="w-16 p-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none">
+                                </td>
+                                <input type="hidden" name="nome" value="{{ peca.nome }}">
+                                <input type="hidden" name="preco" value="{{ peca.preco }}">
+                                <td class="px-6 py-4 text-right">
+                                    <button type="submit" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-all">
+                                        ＋ Adicionar
+                                    </button>
+                                </td>
+                            </form>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- COLUNA DIREITA: CARRINHO (RESUMO) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-3xl border-2 border-slate-900 shadow-xl p-6 sticky top-8">
+                <h2 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                    <span>🛒</span> Resumo da Venda
+                </h2>
+
+                <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+                    {% if orcamento %}
+                        {% for item in orcamento %}
+                        <div class="flex justify-between items-start group">
+                            <div>
+                                <p class="font-bold text-slate-800">{{ item.nome }}</p>
+                                <p class="text-xs text-slate-400">{{ item.quantidade }} un x R$ {{ "%.2f"|format(item.preco|float) }}</p>
+                            </div>
+                            <span class="font-bold text-slate-900">R$ {{ "%.2f"|format(item.subtotal) }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-12">
+                            <p class="text-slate-400 font-medium">Nenhum item adicionado</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Total -->
+                <div class="mt-8 pt-6 border-t-2 border-dashed border-slate-100">
+                    <div class="flex justify-between items-end">
+                        <span class="text-slate-500 font-bold">Total Geral</span>
+                        <span class="text-3xl font-black text-blue-600">R$ {{ total }}</span>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                {% if orcamento %}
+                <form action="{{ url_for('gerar_nota') }}" method="POST" class="mt-8 space-y-4">
+                    <div>
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">Método de Pagamento</label>
+                        <select name="pagamento" class="w-full p-4 rounded-xl bg-slate-50 border-none font-bold text-slate-700 outline-none ring-2 ring-transparent focus:ring-blue-500 transition-all">
+                            <option value="Pix">⚡ Pix</option>
+                            <option value="Cartão">💳 Cartão de Crédito</option>
+                            <option value="Dinheiro">💵 Dinheiro</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95">
+                        FINALIZAR VENDA
+                    </button>
+                </form>
+                <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-4 text-sm font-bold text-red-400 hover:text-red-600 transition-colors">
+                    Limpar Orçamento
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

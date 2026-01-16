@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<h1>🧾 Nota Fiscal</h1>
+
+<div class="nota-fiscal">
+    <img src="{{ url_for('static', filename='img/logo.jpg') }}" class="nota-logo" alt="Logo Gil Eletrônicos">
+    
+    <h2>Gil Eletrônicos</h2>
+    <p>Endereço: Rua Exemplo, 123 - Cidade, Estado</p>
+    <p>CNPJ: 00.000.000/0001-00</p>
+    
+    <h3>Produtos</h3>
+    <table>
+        <tr>
+            <th>Produto</th>
+            <th>Quantidade</th>
+            <th>Preço Unitário (R$)</th>
+            <th>Total (R$)</th>
+        </tr>
+        {% for produto, quantidade, preco in zip(produtos, quantidades, precos) %}
+        <tr>
+            <td>{{ produto }}</td>
+            <td>{{ quantidade }}</td>
+            <td>R$ {{ preco }}</td>
+            <td>R$ {{ (quantidade|int) * (preco|float) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h3>Subtotal: R$ {{ subtotal }}</h3>
+</div>
+
+<button onclick="window.print()">Imprimir Nota Fiscal</button>
+
+{% endblock %}

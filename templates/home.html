@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+<div class="space-y-12 py-6">
+    
+    <!-- SEÇÃO HERO (BOAS-VINDAS) -->
+    <section class="relative overflow-hidden bg-slate-900 rounded-[3rem] p-8 md:p-16 text-center shadow-2xl">
+        <!-- Detalhe de Luz Decorativo -->
+        <div class="absolute -top-24 -left-24 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl"></div>
+        
+        <div class="relative z-10 flex flex-col items-center">
+            <div class="w-32 h-32 mb-8 rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl p-2 bg-white">
+                <img src="{{ url_for('static', filename='img/logo.jpg') }}" alt="Logo" class="w-full h-full object-contain">
+            </div>
+            
+            <h1 class="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4">
+                JM <span class="text-blue-500">eletrônica</span>
+            </h1>
+            <p class="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 font-medium">
+                Gestão inteligente de peças eletrônicas. Tecnologia, confiança e agilidade no seu estoque.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/orcamento" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 hover:-translate-y-1 transition-all shadow-lg shadow-blue-500/20">
+                    🧾 Novo Orçamento
+                </a>
+                <a href="/estoque" class="bg-slate-800 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:bg-slate-700 hover:-translate-y-1 transition-all border border-slate-700">
+                    📦 Ver Estoque
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEÇÃO DE ACESSO RÁPIDO (FEATURES) -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <div class="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-500 transition-all cursor-default">
+            <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                📦
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Controle Total</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+                Acompanhe o nível de estoque em tempo real com alertas de quantidade baixa.
+            </p>
+        </div>
+
+        <div class="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-500 transition-all cursor-default">
+            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                🧾
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Notas Fiscais</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+                Emissão instantânea de orçamentos e notas em PDF com sua logomarca.
+            </p>
+        </div>
+
+        <div class="group bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-500 transition-all cursor-default">
+            <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                👥
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Clientes</h3>
+            <p class="text-slate-500 text-sm leading-relaxed">
+                Cadastro centralizado e busca rápida por CPF para agilizar o atendimento.
+            </p>
+        </div>
+
+    </section>
+
+    <!-- RODAPÉ DE STATUS -->
+    <div class="flex flex-col md:flex-row gap-4 items-center justify-between px-8 py-6 bg-slate-50 rounded-3xl border border-slate-200">
+        <div class="flex items-center gap-3">
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+            </span>
+            <span class="text-sm font-bold text-slate-600">Sistema Online - Unidade Recife</span>
+        </div>
+        <div class="text-sm text-slate-400">
+            Último backup: <span class="text-slate-600 font-bold">Hoje às 22:15</span>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

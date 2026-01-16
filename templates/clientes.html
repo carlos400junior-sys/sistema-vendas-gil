@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Gestão de Clientes</h1>
+    <p class="text-slate-500">Busque, selecione ou cadastre novos clientes para orçamentos.</p>
+</div>
+
+<!-- BARRA DE BUSCA PREMIUM -->
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-10">
+    <form method="POST" class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1">
+            <input type="text" name="pesquisa" placeholder="Buscar por Nome ou CPF..." required 
+                class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 pl-14 focus:ring-4 focus:ring-blue-500/10 outline-none font-medium text-slate-700 transition-all">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-xl">🔍</span>
+        </div>
+        <button type="submit" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 hover:-translate-y-1 transition-all active:scale-95 shadow-lg shadow-slate-200">
+            Pesquisar
+        </button>
+        <a href="{{ url_for('cadastrar_cliente') }}" class="inline-flex items-center justify-center bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 hover:-translate-y-1 transition-all shadow-lg shadow-blue-200">
+            <span class="mr-2">＋</span> Novo Cliente
+        </a>
+    </form>
+</div>
+
+<!-- GRID DE CLIENTES (Substituindo a tabela feia) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for cliente in clientes %}
+    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-blue-500 transition-all group relative overflow-hidden">
+        <!-- Detalhe decorativo no card -->
+        <div class="absolute -top-4 -right-4 w-16 h-16 bg-blue-50 rounded-full group-hover:bg-blue-600 transition-colors duration-500"></div>
+        
+        <div class="flex flex-col h-full">
+            <div class="mb-4">
+                <span class="bg-blue-100 text-blue-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">Cliente Ativo</span>
+            </div>
+            
+            <h3 class="text-xl font-bold text-slate-900 mb-1 group-hover:text-blue-600 transition-colors">{{ cliente.nome }}</h3>
+            <p class="text-slate-400 text-sm font-medium mb-6 flex items-center gap-2">
+                <span class="text-slate-300">💳</span> {{ cliente.cpf }}
+            </p>
+
+            <div class="mt-auto">
+                <a href="{{ url_for('selecionar_cliente', nome=cliente.nome) }}" 
+                    class="w-full inline-flex items-center justify-center bg-slate-50 text-slate-900 py-3 rounded-xl font-bold group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    ✅ Selecionar para Venda
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- Estado Vazio -->
+    <div class="col-span-full py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+        <span class="text-5xl block mb-4">👥</span>
+        <p class="text-slate-400 font-bold text-lg">Nenhum cliente encontrado.</p>
+        <p class="text-slate-400 text-sm">Tente uma nova busca ou cadastre um cliente.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

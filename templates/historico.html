@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Histórico de Vendas</h1>
+    <p class="text-slate-500">Consulte notas emitidas e gere segundas vias rapidamente.</p>
+</div>
+
+<!-- BARRA DE BUSCA PREMIUM -->
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm mb-10">
+    <form method="POST" action="{{ url_for('historico') }}" class="flex flex-col md:flex-row gap-4">
+        <div class="relative flex-1">
+            <input type="text" name="pesquisa" placeholder="Buscar por Nome do Cliente ou Nº da Nota..." 
+                class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 pl-14 focus:ring-4 focus:ring-blue-500/10 outline-none font-medium text-slate-700 transition-all">
+            <span class="absolute left-5 top-1/2 -translate-y-1/2 text-xl">🔍</span>
+        </div>
+        <button type="submit" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200">
+            Filtrar Histórico
+        </button>
+    </form>
+</div>
+
+<!-- TABELA DE HISTÓRICO -->
+<div class="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="bg-slate-50/50">
+                <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Nº Nota</th>
+                <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Cliente</th>
+                <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Data / Hora</th>
+                <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Total</th>
+                <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest text-right">Ação</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+            {% for nota in notas %}
+            <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-6 py-4 font-mono text-sm text-slate-500 font-bold">#{{ nota.numero_nota }}</td>
+                <td class="px-6 py-4">
+                    <span class="font-bold text-slate-900 block">{{ nota.cliente_nome }}</span>
+                    <span class="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-black uppercase">Concluída</span>
+                </td>
+                <td class="px-6 py-4 text-slate-500 text-sm">{{ nota.data_emissao }}</td>
+                <td class="px-6 py-4 font-black text-blue-600">R$ {{ "%.2f"|format(nota.total) }}</td>
+                <td class="px-6 py-4 text-right">
+                    <a href="{{ url_for('reimprimir_nota', id=nota.id) }}" 
+                        class="inline-flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl font-bold text-sm hover:bg-blue-600 transition-all shadow-md shadow-slate-200">
+                        🖨️ 2ª Via
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="px-6 py-20 text-center">
+                    <p class="text-slate-400 font-bold">Nenhuma nota encontrada no histórico.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

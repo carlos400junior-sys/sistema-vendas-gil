@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<div class="card" style="max-width: 500px; margin: auto;">
+    <h2>➕ Novo Cliente</h2>
+    <form method="POST">
+        <label>Nome Completo</label>
+        <input type="text" name="nome" required style="width:100%; margin-bottom:15px; padding:10px;">
+        <label>CPF</label>
+        <input type="text" name="cpf" placeholder="000.000.000-00" required style="width:100%; margin-bottom:15px; padding:10px;">
+        <label>Telefone</label>
+        <input type="text" name="telefone" style="width:100%; margin-bottom:15px; padding:10px;">
+        <button type="submit" class="btn-pdf">💾 Salvar Cliente</button>
+    </form>
+</div>
+{% endblock %}
+

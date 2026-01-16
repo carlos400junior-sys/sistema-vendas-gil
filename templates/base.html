@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gil Cell | Sistema de Gestão</title>
+    <!-- Importação correta da Fonte Plus Jakarta Sans -->
+    <link href="fonts.googleapis.com" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
+        /* Efeito de hover suave nos links */
+        .nav-link { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-link:hover { transform: translateX(5px); }
+    </style>
+</head>
+<body class="flex min-h-screen">
+
+    <!-- Menu Lateral (Sidebar) Fixo -->
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col fixed h-full shadow-2xl z-50">
+        <div class="p-8">
+            <h1 class="text-white text-2xl font-black tracking-tighter flex items-center gap-2">
+                <span class="text-blue-500">⚡</span> JM eletrônica
+            </h1>
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Painel de Controle</p>
+        </div>
+        
+        <!-- Links de Navegação -->
+        <nav class="flex-1 px-4 space-y-1">
+            <a href="/" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">🏠</span> Início
+            </a>
+            <a href="/estoque" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">📦</span> Estoque
+            </a>
+            <a href="/clientes" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">👥</span> Clientes
+            </a>
+            <a href="/orcamento" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">🧾</span> Vendas / Orçamento
+            </a>
+            <a href="/cadastrar" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">➕</span> Cadastrar Peça
+            </a>
+            <a href="/historico" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-800 hover:text-white font-semibold">
+                <span class="text-lg">📋</span> Histórico
+            </a>
+        </nav>
+
+        <!-- Rodapé do Menu -->
+        <div class="p-4 border-t border-slate-800">
+            <div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50">
+                <p class="text-xs font-bold text-slate-500 uppercase">Versão</p>
+                <p class="text-slate-300 font-medium text-sm">2.0.25 Pro</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Área Principal de Conteúdo -->
+    <main class="flex-1 ml-64 p-8 lg:p-12">
+        <div class="max-w-6xl mx-auto">
+            {% block conteudo %}{% endblock %}
+        </div>
+    </main>
+
+</body>
+</html>

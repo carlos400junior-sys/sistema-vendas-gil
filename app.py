@@ -3,6 +3,8 @@ import sqlite3, os, json, io
 from datetime import datetime
 from weasyprint import HTML
 from werkzeug.utils import secure_filename
+import json
+from flask import request, jsonify
 
 app = Flask(__name__)
 app.secret_key = "gil_eletronicos_secret_2025"
@@ -10,6 +12,37 @@ DB_NAME = "database.db"
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def gerar_payload_pix(chave, nome, cidade, valor):
+    """Gera o payload Pix estático no padrão EMV."""
+    def format_field(id, value):
+        return f"{id}{len(value):02}{value}"
+
+    chave_field = format_field("01", chave)
+    merchant_account = format_field("26", f"0014br.gov.bcb.pix{chave_field}")
+    
+    payload = "000201" 
+    payload += merchant_account
+    payload += "52040000" 
+    payload += "5303986" 
+    payload += format_field("54", f"{valor:.2f}")
+    payload += "5802BR" 
+    payload += format_field("59", nome[:25]) 
+    payload += format_field("60", cidade[:15]) 
+    payload += "62070503***" 
+    payload += "6304" 
+
+    # Cálculo do CRC16 (Obrigatório para o banco aceitar o código)
+    crc = 0xFFFF
+    for char in payload:
+        crc ^= ord(char) << 8
+        for _ in range(8):
+            if crc & 0x8000:
+                crc = (crc << 1) ^ 0x1021
+            else:
+                crc <<= 1
+            crc &= 0xFFFF
+    return payload + f"{crc:04X}"
 
 def get_db():
     conn = sqlite3.connect(DB_NAME)
@@ -83,21 +116,72 @@ def historico():
     conn.close()
     return render_template("historico.html", notas=notas)
 
+
 @app.route('/gerar_nota', methods=['POST'])
 def gerar_nota():
-    itens = session.get('carrinho', [])
-    if not itens: return redirect(url_for('orcamento'))
+    # Recupera itens do carrinho ou orcamento
+    itens = session.get('carrinho') or session.get('orcamento', [])
+    if not itens: 
+        return redirect(url_for('orcamento'))
+    
+    # Dados da venda
     numero = datetime.now().strftime("%Y%m%d%H%M%S")
     cliente = session.get('cliente_selecionado', 'Consumidor Final')
-    total = sum(i['subtotal'] for i in itens)
+    total = sum(float(i['subtotal']) for i in itens)
+    pagamento = request.form.get('pagamento')
+    valor_str = f"{total:.2f}"
+
+    # Salva no Banco de Dados (Padrão SQLite/Flask)
     with get_db() as conn:
-        conn.execute("INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome) VALUES (?, ?, ?, ?, ?)",
-                     (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente))
-    logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
-    html = render_template('nota_fiscal.html', itens=itens, total=f"{total:.2f}", logo=logo, numero_nota=numero, data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente)
-    pdf = HTML(string=html, base_url=os.path.dirname(__file__)).write_pdf()
-    session.pop('carrinho', None); session.pop('cliente_selecionado', None)
-    return send_file(io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name=f'nota_{numero}.pdf')
+        conn.execute(
+            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome) VALUES (?, ?, ?, ?, ?)",
+            (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente)
+        )
+
+    # Fluxo Especial para PIX
+    if pagamento == 'Pix':
+        # Gera o payload com a sua chave Mercado Pago
+        payload_pix = gerar_payload_pix(
+            chave="carlinha14.fernandes@gmail.com",
+            nome="JM ELETRONICA",
+            cidade="RECIFE",
+            valor=total
+        )
+        
+        session['pix_data'] = {
+            'payload': payload_pix,
+            'total': valor_str,
+            'numero_nota': numero
+        }
+        return redirect(url_for('confirmacao_pix'))
+
+    # Fluxo para Dinheiro/Cartão (Gera o PDF direto)
+    try:
+        from flask_weasyprint import HTML
+        logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
+        html = render_template('nota_fiscal.html', itens=itens, total=valor_str, 
+                               logo=logo, numero_nota=numero, 
+                               data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente)
+        pdf = HTML(string=html).write_pdf()
+        
+        session.pop('carrinho', None); session.pop('orcamento', None)
+        return send_file(io.BytesIO(pdf), mimetype='application/pdf', 
+                         as_attachment=True, download_name=f'nota_{numero}.pdf')
+    except Exception as e:
+        print(f"Erro PDF: {e}")
+        return redirect(url_for('orcamento'))
+
+
+
+
+
+@app.route('/confirmacao_pix')
+def confirmacao_pix():
+    data = session.get('pix_data')
+    if not data: return redirect(url_for('orcamento'))
+    return render_template('confirmacao_pix.html', data=data) 
+
+
 
 @app.route("/clientes", methods=["GET", "POST"])
 def clientes():
@@ -150,10 +234,53 @@ def reimprimir_nota(id):
     
     return "Nota não encontrada", 404
 
+@app.route('/loja')
+def loja():
+    # Esta linha BUSCA os produtos que você cadastrou no banco de dados
+    # Se sua classe for 'Peca', use Peca.query.all()
+    produtos = Peca.query.all() 
+    
+    # Busca o carrinho da sessão para não dar erro no resumo lateral
+    orcamento = session.get('orcamento', [])
+    
+    # Calcula o total para exibir no botão de pagamento
+    total = sum(float(item.get('subtotal', 0)) for item in orcamento)
+    
+    # Agora a variável 'produtos' EXISTE e pode ser enviada para o HTML
+    return render_template('vitrine.html', 
+                           produtos=produtos, 
+                           orcamento=orcamento, 
+                           total="{:.2f}".format(total))
+@app.route('/baixar_pdf/<numero_nota>')
+def baixar_pdf(numero_nota):
+    with get_db() as conn:
+        nota = conn.execute("SELECT * FROM notas WHERE numero_nota = ?", (numero_nota,)).fetchone()
+    
+    if nota:
+        itens = json.loads(nota['itens_json'])
+        total_formatado = f"{nota['total']:.2f}"
+        logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
+        
+        from flask_weasyprint import HTML
+        import io
+        
+        html = render_template('nota_fiscal.html', 
+                               itens=itens, 
+                               total=total_formatado, 
+                               logo=logo, 
+                               numero_nota=nota['numero_nota'], 
+                               data=nota['data_emissao'], 
+                               cliente=nota['cliente_nome'])
+        
+        pdf = HTML(string=html).write_pdf()
+        
+        # Limpa o carrinho agora que o documento foi gerado
+        session.pop('carrinho', None)
+        session.pop('orcamento', None)
+        
+        return send_file(io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name=f'nota_{numero_nota}.pdf')
+    return "Nota não encontrada", 404
 
 
 if __name__ == "__main__":
-    app.run(port=5002, debug=True, use_reloader=False)
-
-
-
+    app.run(port=5002, debug=True, use_reloader=False)	

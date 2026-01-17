@@ -74,14 +74,16 @@ def gerar_payload_pix(chave, nome, cidade, valor):
 
 # Função para se conectar ao banco PostgreSQL
 
-
 def get_db():
-    # No Render, ele usará a variável de ambiente. 
-    # Se não encontrar (no seu PC), você pode colar a EXTERNAL URL aqui para testar.
-    db_url = os.environ.get('DATABASE_URL', 'postgresql://carlos:xXgU9061BpdlJzaOV8jvYJXdNXhsKAnR@dpg-d5ltb0khg0os73c7708g-a/produtos_b64sUI')
+    # Tenta pegar a URL do Render (Interna - Automática lá no servidor)
+    db_url = os.environ.get('DATABASE_URL')
     
-    conn = psycopg2.connect(db_url)
-    return conn
+    if not db_url:
+        # Se estiver no seu PC, ele usa a EXTERNA que você acabou de achar
+        db_url = "postgresql://carlos:xXgU9061BpdlJzaOV8jvYJXdNXhsKAnR@dpg-d5ltb0khg0os73c7708g-a.oregon-postgres.render.com/produtos_b64s"
+    
+    return psycopg2.connect(db_url)
+
 
 
 

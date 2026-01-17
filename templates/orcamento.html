@@ -47,6 +47,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-50/50 border-bottom border-slate-100">
+                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest w-24">Foto</th>
                             <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Produto</th>
                             <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Preço</th>
                             <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Quantidade</th>
@@ -57,17 +58,34 @@
                         {% for peca in pecas %}
                         <tr class="hover:bg-slate-50/50 transition-colors">
                             <form action="{{ url_for('adicionar_item') }}" method="POST">
+                                <!-- Coluna da Foto -->
+                                <td class="px-6 py-4">
+                                    <div class="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                                        {% if peca.imagem %}
+                                            <img src="{{ url_for('static', filename='img/' + peca.imagem) }}" 
+                                                 alt="{{ peca.nome }}" 
+                                                 class="w-full h-full object-cover">
+                                        {% else %}
+                                            <span class="text-2xl text-slate-300">📦</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+
                                 <td class="px-6 py-4">
                                     <span class="font-bold text-slate-800 block">{{ peca.nome }}</span>
-                                    <span class="text-xs text-slate-400">Estoque disponível</span>
+                                    <span class="text-xs text-slate-400">ID: {{ peca.id if peca.id else 'N/A' }}</span>
                                 </td>
                                 <td class="px-6 py-4 font-semibold text-slate-600">R$ {{ "%.2f"|format(peca.preco) }}</td>
                                 <td class="px-6 py-4">
                                     <input type="number" name="quantidade" value="1" min="1" 
                                         class="w-16 p-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none">
                                 </td>
+                                
+                                <!-- Hidden Inputs para o Carrinho -->
                                 <input type="hidden" name="nome" value="{{ peca.nome }}">
                                 <input type="hidden" name="preco" value="{{ peca.preco }}">
+                                <input type="hidden" name="imagem" value="{{ peca.imagem }}">
+
                                 <td class="px-6 py-4 text-right">
                                     <button type="submit" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-all">
                                         ＋ Adicionar
@@ -92,12 +110,22 @@
                 <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
                     {% if orcamento %}
                         {% for item in orcamento %}
-                        <div class="flex justify-between items-start group">
-                            <div>
-                                <p class="font-bold text-slate-800">{{ item.nome }}</p>
-                                <p class="text-xs text-slate-400">{{ item.quantidade }} un x R$ {{ "%.2f"|format(item.preco|float) }}</p>
+                        <div class="flex justify-between items-center group">
+                            <div class="flex items-center gap-3">
+                                <!-- Miniatura no Carrinho -->
+                                <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0">
+                                    {% if item.imagem %}
+                                        <img src="{{ url_for('static', filename='img/' + item.imagem) }}" class="w-full h-full object-cover">
+                                    {% else %}
+                                        <div class="w-full h-full flex items-center justify-center text-xs">📦</div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-800 leading-tight">{{ item.nome }}</p>
+                                    <p class="text-xs text-slate-400">{{ item.quantidade }} un x R$ {{ "%.2f"|format(item.preco|float) }}</p>
+                                </div>
                             </div>
-                            <span class="font-bold text-slate-900">R$ {{ "%.2f"|format(item.subtotal) }}</span>
+                            <span class="font-bold text-slate-900 whitespace-nowrap">R$ {{ "%.2f"|format(item.subtotal) }}</span>
                         </div>
                         {% endfor %}
                     {% else %}

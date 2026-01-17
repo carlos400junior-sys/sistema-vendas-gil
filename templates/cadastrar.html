@@ -3,16 +3,26 @@
 <div class="max-w-2xl mx-auto py-10">
     <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-10">
         <h1 class="text-3xl font-black text-slate-900 mb-8 text-center">Nova Peça</h1>
+        
         <form method="POST" enctype="multipart/form-data" class="space-y-6">
-            <div class="relative group h-40 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:bg-slate-100 transition-all cursor-pointer">
-                <input type="file" name="foto" class="absolute inset-0 opacity-0 cursor-pointer">
-                <span class="text-4xl mb-2">📸</span>
-                <p class="text-xs font-black text-slate-400 uppercase">Clique para enviar a foto</p>
+            <!-- Upload de Foto com Preview -->
+            <div class="relative group h-48 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:bg-slate-100 transition-all cursor-pointer overflow-hidden">
+                <input type="file" name="foto" id="foto-input" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*">
+                
+                <!-- Imagem que aparecerá após selecionar o arquivo -->
+                <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                
+                <div id="placeholder" class="flex flex-col items-center justify-center">
+                    <span class="text-4xl mb-2">📸</span>
+                    <p class="text-xs font-black text-slate-400 uppercase">Clique para enviar a foto</p>
+                </div>
             </div>
+
             <div>
                 <label class="text-xs font-black text-slate-400 uppercase block mb-2">Nome do Produto</label>
                 <input type="text" name="nome" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
             </div>
+
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="text-xs font-black text-slate-400 uppercase block mb-2">Preço (R$)</label>
@@ -23,11 +33,32 @@
                     <input type="number" name="quantidade" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
                 </div>
             </div>
-            <input type="text" name="categoria" placeholder="Categoria" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
-            <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">SALVAR PRODUTO</button>
+
+            <div>
+                <label class="text-xs font-black text-slate-400 uppercase block mb-2">Categoria</label>
+                <input type="text" name="categoria" placeholder="Ex: Motor, Suspensão..." class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
+            </div>
+
+            <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">
+                SALVAR PRODUTO
+            </button>
         </form>
     </div>
 </div>
+
+<script>
+    // Lógica para mostrar a foto na tela antes de enviar o formulário
+    document.getElementById('foto-input').onchange = function (evt) {
+        const [file] = this.files;
+        if (file) {
+            const preview = document.getElementById('preview');
+            const placeholder = document.getElementById('placeholder');
+            preview.src = URL.createObjectURL(file);
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+    }
+</script>
 {% endblock %}
 
 

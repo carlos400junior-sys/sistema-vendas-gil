@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="max-w-2xl mx-auto py-10 px-4">
+    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-6 md:p-10 text-center">
+        
+        <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-3 border border-blue-100">
+            <span class="text-4xl">⚡</span>
+        </div>
+
+        <h1 class="text-3xl font-black text-slate-900 mb-2">Quase lá!</h1>
+        <p class="text-slate-500 mb-8">Pague via Pix para finalizar sua compra de <br>
+            <span class="text-2xl font-black text-blue-600">R$ {{ data.total }}</span>
+        </p>
+
+        <!-- QR CODE -->
+        <div class="bg-slate-50 p-6 md:p-8 rounded-[2rem] border-2 border-dashed border-slate-200 mb-8">
+            <div class="w-56 h-56 bg-white mx-auto rounded-2xl flex items-center justify-center p-2 shadow-inner">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ data.payload|urlencode }}" 
+                     alt="QR Code Pix" 
+                     class="w-full h-full object-contain">
+            </div>
+            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escaneie o código acima com o app do seu banco</p>
+        </div>
+
+        <div class="text-left mb-8">
+            <label class="text-xs font-black text-slate-400 uppercase mb-2 block ml-2">Pix Copia e Cola</label>
+            <div class="relative group">
+                <input type="text" id="pixCode" readonly value="{{ data.payload }}" 
+                    class="w-full bg-slate-100 border-none rounded-2xl py-4 px-6 pr-24 font-mono text-sm text-slate-600 outline-none ring-2 ring-transparent focus:ring-blue-500/20 transition-all">
+                <button onclick="copiarPix()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all">
+                    COPIAR
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4">
+            <a href="/baixar_pdf/{{ data.numero_nota }}" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-blue-600 transition-all">
+                <span>📄</span> BAIXAR NOTA FISCAL
+            </a>
+            <a href="/" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">
+                Voltar ao Início
+            </a>
+        </div>
+
+        <p class="mt-8 text-[10px] text-slate-400 italic font-bold">
+            Chave: carlinha14.fernandes@gmail.com
+        </p>
+    </div>
+</div>
+
+<script>
+function copiarPix() {
+    var copyText = document.getElementById("pixCode");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("Código copiado com sucesso!");
+}
+</script>
+
+{% endblock %}

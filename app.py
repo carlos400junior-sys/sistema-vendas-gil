@@ -1,3 +1,5 @@
+
+
 from flask import Flask, render_template, request, redirect, url_for, send_file, session
 import sqlite3, os, json, io
 from datetime import datetime
@@ -5,13 +7,39 @@ from weasyprint import HTML
 from werkzeug.utils import secure_filename
 import json
 from flask import request, jsonify
+import psycopg2
+from psycopg2 import sql
+from psycopg2.extras import RealDictCursor
+
 
 app = Flask(__name__)
+from functools import wraps
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "usuario_id" not in session:
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 app.secret_key = "gil_eletronicos_secret_2025"
 DB_NAME = "database.db"
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+def criar_tabelas():
+    with get_db() as conn:
+        # ... (suas tabelas de peças e notas) ...
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                email TEXT UNIQUE NOT NULL, 
+                senha TEXT NOT NULL
+            )
+        """)
+
 
 def gerar_payload_pix(chave, nome, cidade, valor):
     """Gera o payload Pix estático no padrão EMV."""
@@ -44,33 +72,98 @@ def gerar_payload_pix(chave, nome, cidade, valor):
             crc &= 0xFFFF
     return payload + f"{crc:04X}"
 
+# Função para se conectar ao banco PostgreSQL
+
+
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
+    # No Render, ele usará a variável de ambiente. 
+    # Se não encontrar (no seu PC), você pode colar a EXTERNAL URL aqui para testar.
+    db_url = os.environ.get('DATABASE_URL', 'postgresql://carlos:xXgU9061BpdlJzaOV8jvYJXdNXhsKAnR@dpg-d5ltb0khg0os73c7708g-a/produtos_b64sUI')
+    
+    conn = psycopg2.connect(db_url)
     return conn
 
-def criar_tabelas():
-    with get_db() as conn:
-        conn.execute("CREATE TABLE IF NOT EXISTS pecas (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, categoria TEXT, preco REAL, quantidade INTEGER, foto TEXT)")
-        conn.execute("CREATE TABLE IF NOT EXISTS clientes (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, cpf TEXT UNIQUE NOT NULL, telefone TEXT)")
-        conn.execute("CREATE TABLE IF NOT EXISTS notas (id INTEGER PRIMARY KEY AUTOINCREMENT, numero_nota TEXT NOT NULL, data_emissao TEXT NOT NULL, total REAL NOT NULL, itens_json TEXT NOT NULL, cliente_nome TEXT)")
 
-criar_tabelas()
+
+def criar_tabelas():
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        # Criar Usuários
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                senha TEXT NOT NULL
+            );
+        """)
+
+        # Criar Peças
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS pecas (
+                id SERIAL PRIMARY KEY,
+                nome TEXT NOT NULL,
+                categoria TEXT,
+                preco REAL,
+                quantidade INTEGER,
+                foto TEXT
+            );
+        """)
+
+        # Criar Clientes
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS clientes (
+                id SERIAL PRIMARY KEY,
+                nome TEXT NOT NULL,
+                cpf TEXT UNIQUE NOT NULL,
+                telefone TEXT
+            );
+        """)
+
+        # Criar Notas
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notas (
+                id SERIAL PRIMARY KEY,
+                numero_nota TEXT,
+                data_emissao TEXT,
+                total REAL,
+                itens_json TEXT,
+                cliente_nome TEXT
+            );
+        """)
+
+        conn.commit() # ESSENCIAL para o PostgreSQL
+        print("Tabelas verificadas/criadas com sucesso!")
+    except Exception as e:
+        print(f"Erro ao criar tabelas: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @app.route("/")
-def home(): return render_template("home.html")
+@login_required
+def home():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("home.html")
+from psycopg2.extras import RealDictCursor # Adicione este import no topo!
 
 @app.route("/estoque")
+@login_required
 def estoque():
     conn = get_db()
-    pecas = conn.execute("SELECT * FROM pecas").fetchall()
+    # Usamos RealDictCursor para poder acessar os dados no HTML como peça['nome']
+    cur = conn.cursor(cursor_factory=RealDictCursor) 
+    
+    cur.execute("SELECT * FROM pecas ORDER BY id DESC")
+    pecas = cur.fetchall()
+    
+    cur.close()
     conn.close()
     return render_template("index.html", pecas=pecas)
-@app.route("/limpar_carrinho")
-def limpar_carrinho():
-    session.pop('carrinho', None)
-    session.pop('cliente_selecionado', None)
-    return redirect(url_for('orcamento'))
+
 
 @app.route("/cadastrar", methods=["GET", "POST"])
 def cadastrar():
@@ -81,24 +174,56 @@ def cadastrar():
             nome_foto = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{f.filename}")
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], nome_foto))
         
-        with get_db() as conn:
-            conn.execute("INSERT INTO pecas (nome, categoria, preco, quantidade, foto) VALUES (?, ?, ?, ?, ?)",
-                         (request.form["nome"], request.form["categoria"], request.form["preco"], request.form["quantidade"], nome_foto))
+        conn = get_db()
+        cur = conn.cursor() # VOCÊ PRECISA DISSO
+        try:
+            # 1. Use cur.execute (não conn.execute)
+            # 2. Use %s (não ?)
+            cur.execute("""
+                INSERT INTO pecas (nome, categoria, preco, quantidade, foto) 
+                VALUES (%s, %s, %s, %s, %s)
+            """, (request.form["nome"], request.form["categoria"], 
+                  request.form["preco"], request.form["quantidade"], nome_foto))
+            
+            conn.commit() # OBRIGATÓRIO no Postgres
+        except Exception as e:
+            conn.rollback()
+            print(f"Erro ao salvar peça: {e}")
+        finally:
+            cur.close()
+            conn.close()
+            
         return redirect(url_for("estoque"))
     return render_template("cadastrar.html")
+
+from psycopg2.extras import RealDictCursor # Garanta que este import esteja no topo do app.py
 
 @app.route("/orcamento", methods=["GET", "POST"])
 def orcamento():
     conn = get_db()
+    # Usamos o RealDictCursor para que o pecas.id e pecas.nome funcionem no HTML
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
     pecas = []
     pesquisa = request.form.get('pesquisa', '').strip()
+    
     if pesquisa:
-        pecas = conn.execute("SELECT * FROM pecas WHERE nome LIKE ?", ('%' + pesquisa + '%',)).fetchall()
-    total = sum(item['subtotal'] for item in session.get('carrinho', []))
+        # No Postgres usamos %s e o operador ILIKE é melhor (ignora maiúsculas/minúsculas)
+        cur.execute("SELECT * FROM pecas WHERE nome ILIKE %s", ('%' + pesquisa + '%',))
+        pecas = cur.fetchall()
+    
+    # Fecha o cursor e a conexão
+    cur.close()
     conn.close()
-    return render_template("orcamento.html", pecas=pecas, orcamento=session.get('carrinho', []), total=f"{total:.2f}")
+    
+    # Cálculo do total do carrinho (mantém a lógica da sessão)
+    total = sum(float(item['subtotal']) for item in session.get('carrinho', []))
+    
+    return render_template("orcamento.html", 
+                           pecas=pecas, 
+                           orcamento=session.get('carrinho', []), 
+                           total=f"{total:.2f}")
 
-@app.route("/adicionar_item", methods=["POST"])
 def adicionar_item():
     carrinho = session.get('carrinho', [])
     p, q = float(request.form["preco"]), int(request.form["quantidade"])
@@ -108,63 +233,76 @@ def adicionar_item():
     return redirect(url_for('orcamento'))
 
 @app.route("/historico", methods=["GET", "POST"])
+@login_required # Garanta que o decorador esteja aqui se quiser proteção
 def historico():
     conn = get_db()
+    # Usamos o RealDictCursor para que o HTML consiga ler nota['numero_nota'], etc.
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
     pesquisa = request.form.get('pesquisa', '').strip()
-    query = "SELECT * FROM notas WHERE cliente_nome LIKE ? OR numero_nota LIKE ? ORDER BY id DESC"
-    notas = conn.execute(query, ('%' + pesquisa + '%', '%' + pesquisa + '%')).fetchall()
+    
+    # 1. Trocado ? por %s
+    # 2. Trocado LIKE por ILIKE (opcional, mas melhor no Postgres para ignorar maiúsculas)
+    query = "SELECT * FROM notas WHERE cliente_nome ILIKE %s OR numero_nota ILIKE %s ORDER BY id DESC"
+    
+    cur.execute(query, ('%' + pesquisa + '%', '%' + pesquisa + '%'))
+    notas = cur.fetchall()
+    
+    cur.close()
     conn.close()
+    
     return render_template("historico.html", notas=notas)
 
 
 @app.route('/gerar_nota', methods=['POST'])
 def gerar_nota():
-    # Recupera itens do carrinho ou orcamento
     itens = session.get('carrinho') or session.get('orcamento', [])
     if not itens: 
         return redirect(url_for('orcamento'))
     
-    # Dados da venda
     numero = datetime.now().strftime("%Y%m%d%H%M%S")
     cliente = session.get('cliente_selecionado', 'Consumidor Final')
     total = sum(float(i['subtotal']) for i in itens)
     pagamento = request.form.get('pagamento')
     valor_str = f"{total:.2f}"
 
-    # Salva no Banco de Dados (Padrão SQLite/Flask)
-    with get_db() as conn:
-        conn.execute(
-            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome) VALUES (?, ?, ?, ?, ?)",
+    # --- CORREÇÃO PARA POSTGRES ---
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome) VALUES (%s, %s, %s, %s, %s)",
             (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente)
         )
+        conn.commit() # Salva no banco
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao salvar nota: {e}")
+        return "Erro ao processar venda", 500
+    finally:
+        cur.close()
+        conn.close()
+    # ------------------------------
 
-    # Fluxo Especial para PIX
     if pagamento == 'Pix':
-        # Gera o payload com a sua chave Mercado Pago
         payload_pix = gerar_payload_pix(
             chave="carlinha14.fernandes@gmail.com",
             nome="JM ELETRONICA",
             cidade="RECIFE",
             valor=total
         )
-        
-        session['pix_data'] = {
-            'payload': payload_pix,
-            'total': valor_str,
-            'numero_nota': numero
-        }
+        session['pix_data'] = {'payload': payload_pix, 'total': valor_str, 'numero_nota': numero}
         return redirect(url_for('confirmacao_pix'))
 
-    # Fluxo para Dinheiro/Cartão (Gera o PDF direto)
+    # Para outros pagamentos, gera o PDF
     try:
-        from flask_weasyprint import HTML
         logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
         html = render_template('nota_fiscal.html', itens=itens, total=valor_str, 
                                logo=logo, numero_nota=numero, 
                                data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente)
         pdf = HTML(string=html).write_pdf()
         
-        session.pop('carrinho', None); session.pop('orcamento', None)
+        session.pop('carrinho', None)
         return send_file(io.BytesIO(pdf), mimetype='application/pdf', 
                          as_attachment=True, download_name=f'nota_{numero}.pdf')
     except Exception as e:
@@ -186,10 +324,21 @@ def confirmacao_pix():
 @app.route("/clientes", methods=["GET", "POST"])
 def clientes():
     conn = get_db()
+    # Usamos RealDictCursor para o HTML ler cliente.nome e cliente.cpf corretamente
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
     p = request.form.get('pesquisa', '').strip()
-    clis = conn.execute("SELECT * FROM clientes WHERE nome LIKE ? OR cpf LIKE ?", ('%'+p+'%', '%'+p+'%')).fetchall()
+    
+    # No Postgres usamos %s e ILIKE para busca flexível
+    query = "SELECT * FROM clientes WHERE nome ILIKE %s OR cpf ILIKE %s ORDER BY nome"
+    cur.execute(query, ('%'+p+'%', '%'+p+'%'))
+    clis = cur.fetchall()
+    
+    cur.close()
     conn.close()
+    
     return render_template("clientes.html", clientes=clis)
+
 
 @app.route("/selecionar_cliente/<nome>")
 def selecionar_cliente(nome):
@@ -197,12 +346,59 @@ def selecionar_cliente(nome):
     return redirect(url_for("orcamento"))
 
 @app.route("/cadastrar_cliente", methods=["GET", "POST"])
+@login_required
 def cadastrar_cliente():
     if request.method == "POST":
-        with get_db() as conn:
-            conn.execute("INSERT INTO clientes (nome, cpf, telefone) VALUES (?, ?, ?)", (request.form["nome"], request.form["cpf"], request.form["telefone"]))
+        conn = get_db()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                "INSERT INTO clientes (nome, cpf, telefone) VALUES (%s, %s, %s)",
+                (request.form["nome"], request.form["cpf"], request.form["telefone"])
+            )
+            conn.commit() # SALVA NO POSTGRES
+        except Exception as e:
+            conn.rollback()
+            print(f"Erro ao cadastrar cliente: {e}")
+        finally:
+            cur.close()
+            conn.close()
         return redirect(url_for("clientes"))
     return render_template("cadastrar_cliente.html")
+@app.route("/adicionar_item", methods=["POST"])
+def adicionar_item():
+    # Pega o carrinho atual da sessão ou cria um vazio
+    carrinho = session.get('carrinho', [])
+    
+    # Pega os dados enviados pelo formulário do orcamento.html
+    nome = request.form.get("nome")
+    preco = float(request.form.get("preco", 0))
+    quantidade = int(request.form.get("quantidade", 1))
+    subtotal = preco * quantidade
+
+    # Adiciona o novo item
+    carrinho.append({
+        'nome': nome,
+        'preco': preco,
+        'quantidade': quantidade,
+        'subtotal': subtotal
+    })
+
+    # Salva de volta na sessão
+    session['carrinho'] = carrinho
+    session.modified = True
+    
+    return redirect(url_for('orcamento'))
+@app.route("/limpar_carrinho")
+def limpar_carrinho():
+    # Remove o carrinho e o cliente selecionado da sessão
+    session.pop('carrinho', None)
+    session.pop('cliente_selecionado', None)
+    # Redireciona de volta para a página de orçamento vazia
+    return redirect(url_for('orcamento'))
+
+
+
 @app.route('/reimprimir_nota/<int:id>')
 def reimprimir_nota(id):
     conn = get_db()
@@ -236,34 +432,47 @@ def reimprimir_nota(id):
 
 @app.route('/loja')
 def loja():
-    # Esta linha BUSCA os produtos que você cadastrou no banco de dados
-    # Se sua classe for 'Peca', use Peca.query.all()
-    produtos = Peca.query.all() 
+    conn = get_db()
+    cursor = conn.cursor()  # Criar o cursor
     
-    # Busca o carrinho da sessão para não dar erro no resumo lateral
+    cursor.execute("SELECT * FROM pecas")  # Executar a consulta SQL
+
+    produtos_db = cursor.fetchall()  # Pegar os resultados da consulta
+
+    cursor.close()  # Fechar o cursor
+    conn.close()    # Fechar a conexão
+
     orcamento = session.get('orcamento', [])
-    
-    # Calcula o total para exibir no botão de pagamento
     total = sum(float(item.get('subtotal', 0)) for item in orcamento)
     
-    # Agora a variável 'produtos' EXISTE e pode ser enviada para o HTML
     return render_template('vitrine.html', 
-                           produtos=produtos, 
+                           produtos=produtos_db, 
                            orcamento=orcamento, 
                            total="{:.2f}".format(total))
+
+
+
 @app.route('/baixar_pdf/<numero_nota>')
 def baixar_pdf(numero_nota):
-    with get_db() as conn:
-        nota = conn.execute("SELECT * FROM notas WHERE numero_nota = ?", (numero_nota,)).fetchone()
+    conn = get_db()
+    # Usamos RealDictCursor para que o 'nota' se comporte como um dicionário
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    try:
+        # 1. Trocado para cur.execute
+        # 2. Trocado ? por %s
+        cur.execute("SELECT * FROM notas WHERE numero_nota = %s", (numero_nota,))
+        nota = cur.fetchone()
+    finally:
+        cur.close()
+        conn.close()
     
     if nota:
         itens = json.loads(nota['itens_json'])
         total_formatado = f"{nota['total']:.2f}"
         logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
         
-        from flask_weasyprint import HTML
-        import io
-        
+        # Renderiza o template da nota
         html = render_template('nota_fiscal.html', 
                                itens=itens, 
                                total=total_formatado, 
@@ -272,14 +481,73 @@ def baixar_pdf(numero_nota):
                                data=nota['data_emissao'], 
                                cliente=nota['cliente_nome'])
         
-        pdf = HTML(string=html).write_pdf()
+        # Gera o PDF usando o WeasyPrint importado no topo
+        pdf_gerado = HTML(string=html).write_pdf()
         
-        # Limpa o carrinho agora que o documento foi gerado
+        # Limpa as sessões de venda após o download
         session.pop('carrinho', None)
         session.pop('orcamento', None)
         
-        return send_file(io.BytesIO(pdf), mimetype='application/pdf', as_attachment=True, download_name=f'nota_{numero_nota}.pdf')
+        return send_file(
+            io.BytesIO(pdf_gerado), 
+            mimetype='application/pdf', 
+            as_attachment=True, 
+            download_name=f'nota_{numero_nota}.pdf'
+        )
+    
     return "Nota não encontrada", 404
+
+#ROTA PARA GERAR LOGIN 
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        email = request.form.get("email")
+        senha = request.form.get("senha")
+        
+        conn = get_db()
+        cur = conn.cursor() # Você PRECISA criar um cursor no PostgreSQL
+        
+        cur.execute("SELECT * FROM usuarios WHERE email = %s AND senha = %s", (email, senha))
+        user = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+        
+        if user:
+            session["usuario_id"] = user[0] # No Postgres/psycopg2, o acesso costuma ser por índice
+            return redirect(url_for("home"))
+        
+        return "Login inválido!"
+    return render_template("login.html")
+
+#ROTA PARA CADASTRAR USUARIO
+@app.route("/registrar", methods=["GET", "POST"])
+def registrar():
+    if request.method == "POST":
+        email = request.form.get("email")
+        senha = request.form.get("senha")
+        
+        conn = get_db()
+        cur = conn.cursor()
+        try:
+            # Use %s para o Postgres, não ?
+            cur.execute("INSERT INTO usuarios (email, senha) VALUES (%s, %s)", (email, senha))
+            conn.commit() # Sem isso, o usuário não é salvo!
+            return redirect(url_for('login'))
+        except Exception as e:
+            conn.rollback()
+            print(f"ERRO NO REGISTRO: {e}") # Olhe o terminal aqui!
+            return "Erro: E-mail já existe ou falha na conexão."
+        finally:
+            cur.close()
+            conn.close()
+    return render_template("registrar.html")
+
+@app.route('/logout')
+def logout():
+    session.clear() # Limpa o usuario_id e o carrinho
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":

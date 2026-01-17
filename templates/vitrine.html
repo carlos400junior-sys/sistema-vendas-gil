@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<div class="max-w-7xl mx-auto px-4 py-10">
+    <!-- Cabeçalho da Loja -->
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-black text-slate-900 mb-2">Nossa Vitrine</h1>
+        <p class="text-slate-500">Escolha os produtos e finalize seu pedido via Pix.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        
+        <!-- GRADE DE PRODUTOS (3 Colunas) -->
+        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for produto in produtos %}
+            <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all overflow-hidden group">
+                <!-- Imagem do Produto -->
+                <div class="h-56 bg-slate-100 overflow-hidden relative">
+                    {% if produto.imagem %}
+                        <img src="{{ url_for('static', filename='img/' + produto.imagem) }}" 
+                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                    {% else %}
+                        <div class="w-full h-full flex items-center justify-center text-5xl">📦</div>
+                    {% endif %}
+                    <span class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black text-slate-900 shadow-sm">
+                        {{ produto.categoria }}
+                    </span>
+                </div>
+
+                <!-- Info do Produto -->
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-slate-900 mb-1">{{ produto.nome }}</h3>
+                    <p class="text-2xl font-black text-blue-600 mb-4">R$ {{ "%.2f"|format(produto.preco) }}</p>
+                    
+                    <form action="{{ url_for('adicionar_item') }}" method="POST" class="flex gap-2">
+                        <input type="hidden" name="nome" value="{{ produto.nome }}">
+                        <input type="hidden" name="preco" value="{{ produto.preco }}">
+                        <input type="hidden" name="imagem" value="{{ produto.imagem }}">
+                        
+                        <input type="number" name="quantidade" value="1" min="1" 
+                               class="w-16 bg-slate-50 border-none rounded-xl font-bold text-center focus:ring-2 focus:ring-blue-500">
+                        
+                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition-colors">
+                            🛒 Comprar
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- CARRINHO LATERAL (1 Coluna) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-[2.5rem] border-2 border-slate-900 p-6 sticky top-8 shadow-2xl">
+                <h2 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                    <span>🛍️</span> Seu Pedido
+                </h2>
+
+                <div class="space-y-4 max-h-[350px] overflow-y-auto mb-6 pr-2">
+                    {% if orcamento %}
+                        {% for item in orcamento %}
+                        <div class="flex justify-between items-center animate-in fade-in slide-in-from-right-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
+                                    <img src="{{ url_for('static', filename='img/' + item.imagem) }}" class="w-full h-full object-cover">
+                                </div>
+                                <div>
+                                    <p class="font-bold text-slate-800 text-sm leading-tight">{{ item.nome }}</p>
+                                    <p class="text-xs text-slate-400">{{ item.quantidade }}x R$ {{ item.preco }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-center text-slate-400 py-10 font-medium">Carrinho vazio</p>
+                    {% endif %}
+                </div>
+
+                <div class="border-t-2 border-dashed border-slate-100 pt-6">
+                    <div class="flex justify-between items-end mb-6">
+                        <span class="text-slate-500 font-bold uppercase text-xs tracking-widest">Total a pagar</span>
+                        <span class="text-3xl font-black text-blue-600">R$ {{ total }}</span>
+                    </div>
+
+                    {% if orcamento %}
+                    <form action="{{ url_for('gerar_nota') }}" method="POST">
+                        <input type="hidden" name="pagamento" value="Pix">
+                        <button type="submit" class="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-green-100 hover:bg-green-600 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2">
+                            ⚡ PAGAR COM PIX
+                        </button>
+                    </form>
+                    <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase">
+                        Limpar tudo
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

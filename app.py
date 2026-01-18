@@ -434,23 +434,29 @@ def reimprimir_nota(id):
 
 @app.route('/loja')
 def loja():
-    conn = get_db()
-    cursor = conn.cursor()  # Criar o cursor
-    
-    cursor.execute("SELECT * FROM pecas")  # Executar a consulta SQL
+    try:
+        conn = get_db()
+        cursor = conn.cursor()  # Criar o cursor
 
-    produtos_db = cursor.fetchall()  # Pegar os resultados da consulta
+        cursor.execute("SELECT * FROM pecas")  # Executar a consulta SQL
 
-    cursor.close()  # Fechar o cursor
-    conn.close()    # Fechar a conexão
+        produtos_db = cursor.fetchall()  # Pegar os resultados da consulta
 
-    orcamento = session.get('orcamento', [])
-    total = sum(float(item.get('subtotal', 0)) for item in orcamento)
-    
-    return render_template('vitrine.html', 
-                           produtos=produtos_db, 
-                           orcamento=orcamento, 
-                           total="{:.2f}".format(total))
+        cursor.close()  # Fechar o cursor
+        conn.close()    # Fechar a conexão
+
+        orcamento = session.get('orcamento', [])
+        total = sum(float(item.get('subtotal', 0)) for item in orcamento)
+
+        return render_template('vitrine.html', 
+                               produtos=produtos_db, 
+                               orcamento=orcamento, 
+                               total="{:.2f}".format(total))
+
+    except Exception as e:
+        print(f"Erro na rota '/loja': {e}")
+        return "Erro ao carregar a loja, tente novamente mais tarde.", 500
+
 
 
 

@@ -367,30 +367,53 @@ def cadastrar_cliente():
             conn.close()
         return redirect(url_for("clientes"))
     return render_template("cadastrar_cliente.html")
+
+
 @app.route("/adicionar_item", methods=["POST"])
 def adicionar_item():
-    # Pega o carrinho atual da sessão ou cria um vazio
-    carrinho = session.get('carrinho', [])
+    # Pega o orçamento atual da sessão (usando o nome que a rota /loja usa)
+    orcamento = session.get('orcamento', [])
     
-    # Pega os dados enviados pelo formulário do orcamento.html
+    # Pega os dados enviados pelo formulário
     nome = request.form.get("nome")
-    preco = float(request.form.get("preco", 0))
-    quantidade = int(request.form.get("quantidade", 1))
-    subtotal = preco * quantidade
-
-    # Adiciona o novo item
-    carrinho.append({
-        'nome': nome,
-        'preco': preco,
-        'quantidade': quantidade,
-        'subtotal': subtotal
-    })
-
-    # Salva de volta na sessão
-    session['carrinho'] = carrinho
+    preco = request.form.get("preco", 0)
+    quantidade = request.form.get("quantidade", 1)
+    # Pega a foto para exibir no carrinho lateral
+    foto = request.form.get("imagem") 
+    
+    try:
+        preco = float(preco)
+        quantidade = int(quantidade)
+        if preco <= 0 or quantidade <= 0:
+            raise ValueError("Preço e quantidade devem ser maiores que zero.")
+    except ValueError:
+        flash("Dados inválidos. Por favor, verifique o preço e a quantidade.", "error")
+        return redirect(url_for('loja') + '#carrinho')
+    
+    # Verifica se o item já existe no orçamento
+    item_existente = next((item for item in orcamento if item['nome'] == nome), None)
+    
+    if item_existente:
+        # Se já existir, atualiza a quantidade
+        item_existente['quantidade'] += quantidade
+    else:
+        # Caso contrário, adiciona o novo item com a chave 'imagem' para o HTML renderizar
+        orcamento.append({
+            'nome': nome,
+            'preco': preco,
+            'quantidade': quantidade,
+            'imagem': foto
+        })
+    
+    # Salva de volta na sessão como 'orcamento'
+    session['orcamento'] = orcamento
     session.modified = True
     
-    return redirect(url_for('orcamento'))
+    # Redireciona para a vitrine (rota loja) focando na div #carrinho
+    return redirect(url_for('loja') + '#carrinho')
+
+
+
 @app.route("/limpar_carrinho")
 def limpar_carrinho():
     # Remove o carrinho e o cliente selecionado da sessão
@@ -436,17 +459,19 @@ def reimprimir_nota(id):
 def loja():
     try:
         conn = get_db()
-        cursor = conn.cursor()  # Criar o cursor
+        # O DictCursor faz o psycopg2 retornar os dados como dicionário
+        from psycopg2.extras import RealDictCursor
+        cursor = conn.cursor(cursor_factory=RealDictCursor) 
 
-        cursor.execute("SELECT * FROM pecas")  # Executar a consulta SQL
+        cursor.execute("SELECT * FROM pecas")
+        produtos_db = cursor.fetchall() 
 
-        produtos_db = cursor.fetchall()  # Pegar os resultados da consulta
-
-        cursor.close()  # Fechar o cursor
-        conn.close()    # Fechar a conexão
+        cursor.close()
+        conn.close()
 
         orcamento = session.get('orcamento', [])
-        total = sum(float(item.get('subtotal', 0)) for item in orcamento)
+        # Certifique-se de que o subtotal é calculado corretamente
+        total = sum(float(item.get('preco', 0)) * int(item.get('quantidade', 1)) for item in orcamento)
 
         return render_template('vitrine.html', 
                                produtos=produtos_db, 
@@ -454,8 +479,9 @@ def loja():
                                total="{:.2f}".format(total))
 
     except Exception as e:
-        print(f"Erro na rota '/loja': {e}")
-        return "Erro ao carregar a loja, tente novamente mais tarde.", 500
+        print(f"Erro detalhado na rota '/loja': {e}")
+        return f"Erro interno: {e}", 500
+
 
 
 

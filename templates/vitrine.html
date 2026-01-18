@@ -1,102 +1,148 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
-<div class="max-w-7xl mx-auto px-4 py-10">
-    <!-- Cabeçalho da Loja -->
-    <div class="text-center mb-12">
-        <h1 class="text-4xl font-black text-slate-900 mb-2">Nossa Vitrine</h1>
-        <p class="text-slate-500">Escolha os produtos e finalize seu pedido via Pix.</p>
+<style>
+  .card-shadow { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); transition: all 0.3s ease; }
+  .card-shadow:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1); }
+  
+  /* Mantém o alinhamento dos nomes dos produtos */
+  .product-name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 2.5rem;
+    line-height: 1.25rem;
+  }
+
+  /* Remove as setas padrão do input number */
+  input[type=number]::-webkit-inner-spin-button, 
+  input[type=number]::-webkit-outer-spin-button { 
+    -webkit-appearance: none; 
+    margin: 0; 
+  }
+</style>
+
+<div class="max-w-[1400px] mx-auto px-4 py-8">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- GRADE DE PRODUTOS -->
+    <div class="lg:col-span-9 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+      {% for produto in produtos %}
+      <div class="bg-white rounded-xl overflow-hidden flex flex-col h-full card-shadow border border-gray-100">
+        <div class="relative h-40 bg-gray-50">
+          {% if produto.foto %}
+          <img src="{{ url_for('static', filename='uploads/' + produto.foto) }}" class="w-full h-full object-contain p-2">
+          {% else %}
+          <div class="w-full h-full flex items-center justify-center bg-gray-100 text-2xl text-gray-400">📷</div>
+          {% endif %}
+        </div>
+
+        <div class="p-3 flex-grow flex flex-col">
+          <h3 class="text-xs md:text-sm text-gray-700 font-bold mb-2 product-name">
+            {{ produto.nome }}
+          </h3>
+          
+          <div class="mt-auto">
+            <div class="text-blue-600 mb-3">
+              <span class="text-xs font-bold">R$</span>
+              <span class="text-lg font-black">{{ "%.2f"|format(produto.preco) }}</span>
+            </div>
+
+            <!-- Formulário com Botões +/- -->
+            <form action="{{ url_for('adicionar_item') }}" method="POST" class="space-y-2">
+              <input type="hidden" name="nome" value="{{ produto.nome }}">
+              <input type="hidden" name="preco" value="{{ produto.preco }}">
+              <input type="hidden" name="imagem" value="{{ produto.foto }}">
+              
+              <div class="flex items-center justify-center border border-gray-200 rounded-lg overflow-hidden h-9">
+                <button type="button" onclick="alterarQtd(this, -1)" class="px-3 h-full bg-gray-100 hover:bg-gray-200 font-bold text-gray-600">-</button>
+                <input type="number" name="quantidade" value="1" min="1" readonly
+                       class="w-10 text-center text-xs font-bold bg-white outline-none m-0">
+                <button type="button" onclick="alterarQtd(this, 1)" class="px-3 h-full bg-gray-100 hover:bg-gray-200 font-bold text-gray-600">+</button>
+              </div>
+              
+              <button type="submit" class="w-full bg-gray-900 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-blue-700 transition-colors uppercase">
+                Adicionar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        <!-- GRADE DE PRODUTOS (3 Colunas) -->
-        <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {% for produto in produtos %}
-            <div class="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm hover:shadow-xl transition-all overflow-hidden group">
-                <!-- Imagem do Produto -->
-                <div class="h-56 bg-slate-100 overflow-hidden relative">
-                    {% if produto.imagem %}
-                        <img src="{{ url_for('static', filename='img/' + produto.imagem) }}" 
-                             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                    {% else %}
-                        <div class="w-full h-full flex items-center justify-center text-5xl">📦</div>
-                    {% endif %}
-                    <span class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-black text-slate-900 shadow-sm">
-                        {{ produto.categoria }}
-                    </span>
-                </div>
+    <!-- CARRINHO LATERAL -->
+    <div class="lg:col-span-3" id="carrinho">
+      <div class="bg-white rounded-xl p-5 sticky top-8 shadow-lg border border-gray-100">
+        <h2 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2 flex items-center gap-2">
+          <span class="text-blue-600">🛒</span> Seu Pedido
+        </h2>
 
-                <!-- Info do Produto -->
-                <div class="p-6">
-                    <h3 class="text-xl font-bold text-slate-900 mb-1">{{ produto.nome }}</h3>
-                    <p class="text-2xl font-black text-blue-600 mb-4">R$ {{ "%.2f"|format(produto.preco) }}</p>
-                    
-                    <form action="{{ url_for('adicionar_item') }}" method="POST" class="flex gap-2">
-                        <input type="hidden" name="nome" value="{{ produto.nome }}">
-                        <input type="hidden" name="preco" value="{{ produto.preco }}">
-                        <input type="hidden" name="imagem" value="{{ produto.imagem }}">
-                        
-                        <input type="number" name="quantidade" value="1" min="1" 
-                               class="w-16 bg-slate-50 border-none rounded-xl font-bold text-center focus:ring-2 focus:ring-blue-500">
-                        
-                        <button type="submit" class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-blue-600 transition-colors">
-                            🛒 Comprar
-                        </button>
-                    </form>
-                </div>
+        <div class="space-y-3 max-h-[400px] overflow-y-auto mb-4">
+          {% if orcamento %}
+            {% for item in orcamento %}
+            <div class="flex gap-2 items-center p-2 bg-gray-50 rounded-lg">
+              <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" class="w-8 h-8 object-cover rounded">
+              <div class="min-w-0 flex-1">
+                <p class="text-[11px] font-bold text-gray-800 truncate">{{ item.nome }}</p>
+                <p class="text-[10px] text-blue-600 font-bold">{{ item.quantidade }}x R$ {{ item.preco }}</p>
+              </div>
             </div>
             {% endfor %}
+          {% else %}
+            <p class="text-center text-xs text-gray-400 py-10 italic">Carrinho vazio</p>
+          {% endif %}
         </div>
 
-        <!-- CARRINHO LATERAL (1 Coluna) -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-[2.5rem] border-2 border-slate-900 p-6 sticky top-8 shadow-2xl">
-                <h2 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                    <span>🛍️</span> Seu Pedido
-                </h2>
-
-                <div class="space-y-4 max-h-[350px] overflow-y-auto mb-6 pr-2">
-                    {% if orcamento %}
-                        {% for item in orcamento %}
-                        <div class="flex justify-between items-center animate-in fade-in slide-in-from-right-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                                    <img src="{{ url_for('static', filename='img/' + item.imagem) }}" class="w-full h-full object-cover">
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-800 text-sm leading-tight">{{ item.nome }}</p>
-                                    <p class="text-xs text-slate-400">{{ item.quantidade }}x R$ {{ item.preco }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <p class="text-center text-slate-400 py-10 font-medium">Carrinho vazio</p>
-                    {% endif %}
-                </div>
-
-                <div class="border-t-2 border-dashed border-slate-100 pt-6">
-                    <div class="flex justify-between items-end mb-6">
-                        <span class="text-slate-500 font-bold uppercase text-xs tracking-widest">Total a pagar</span>
-                        <span class="text-3xl font-black text-blue-600">R$ {{ total }}</span>
-                    </div>
-
-                    {% if orcamento %}
-                    <form action="{{ url_for('gerar_nota') }}" method="POST">
-                        <input type="hidden" name="pagamento" value="Pix">
-                        <button type="submit" class="w-full bg-green-500 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-green-100 hover:bg-green-600 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-2">
-                            ⚡ PAGAR COM PIX
-                        </button>
-                    </form>
-                    <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase">
-                        Limpar tudo
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
+        {% if orcamento %}
+        <div class="border-t pt-4">
+          <div class="flex justify-between items-center mb-4">
+            <span class="text-xs font-bold text-gray-500">TOTAL</span>
+            <span class="text-xl font-black text-blue-600">R$ {{ total }}</span>
+          </div>
+          <button onclick="enviarWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold text-xs hover:bg-green-600 flex items-center justify-center gap-2">
+            Finalizar WhatsApp
+          </button>
+          <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-3 text-[9px] text-gray-400 uppercase hover:text-red-500">Esvaziar</a>
         </div>
+        {% endif %}
+      </div>
     </div>
+  </div>
 </div>
+
+<script>
+  // Função para os botões de + e -
+  function alterarQtd(btn, delta) {
+    const input = btn.parentElement.querySelector('input');
+    let valorAtual = parseInt(input.value);
+    if (valorAtual + delta >= 1) {
+      input.value = valorAtual + delta;
+    }
+  }
+
+  // Scroll suave ao adicionar item
+  window.addEventListener('load', function() {
+    if (window.location.hash === '#carrinho') {
+      const el = document.getElementById('carrinho');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+
+  // Função WhatsApp enviando link para PDF
+  function enviarWhatsapp() {
+    const meuTelefone = "5581973185093"; 
+    const linkPdf = window.location.origin + "/gerar_pdf";
+    
+    let msg = "*🛍️ NOVO PEDIDO - LOJA DE ELETRÔNICOS*\n";
+    msg += "----------------------------------\n";
+    msg += "Olá! Segue meu pedido detalhado em PDF no link abaixo:\n\n";
+    msg += "📄 *VER PEDIDO:* " + linkPdf + "\n\n";
+    msg += "*Valor Total:* R$ {{ total }}";
+    
+    window.open("https://api.whatsapp.com" + meuTelefone + "&text=" + encodeURIComponent(msg), '_blank');
+  }
+</script>
 
 {% endblock %}

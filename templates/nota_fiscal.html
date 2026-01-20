@@ -3,156 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <style>
-        @page { size: A4; margin: 1cm; }
+        @page { 
+            size: A4; 
+            margin: 0; /* Margem zero para controle total do fundo */
+        }
         
         body { 
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
-            color: #1e293b; 
-            line-height: 1.5;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            color: #334155; 
             margin: 0;
             padding: 0;
+            background-color: #ffffff;
         }
 
-        /* Cabeçalho Moderno */
+        /* Faixa decorativa lateral ou superior */
+        .top-bar {
+            height: 8px;
+            background: linear-gradient(90deg, #0f172a 0%, #3b82f6 100%);
+        }
+
+        .container {
+            padding: 40px;
+        }
+
+        /* Cabeçalho */
         .header { 
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 40px;
         }
 
-        .logo-box { float: left; width: 140px; }
-        .logo-img { width: 100%; height: auto; border-radius: 8px; }
+        .logo-box { float: left; width: 160px; }
+        .logo-img { width: 100%; border-radius: 12px; }
 
         .company-info { float: right; text-align: right; }
-        .company-info h1 { margin: 0; font-size: 20pt; font-weight: 800; color: #0f172a; letter-spacing: -1px; }
-        .company-info p { margin: 2px 0; font-size: 9pt; color: #64748b; }
+        .company-info h1 { 
+            margin: 0; 
+            font-size: 24pt; 
+            font-weight: 900; 
+            color: #0f172a; 
+            letter-spacing: -1.5px;
+            text-transform: uppercase;
+        }
+        .company-info p { margin: 1px 0; font-size: 8.5pt; color: #64748b; font-weight: 500; }
 
         .clear { clear: both; }
 
-        /* Grid de Informações Secundárias */
-        .summary-grid {
-            margin: 20px 0;
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 15px;
-        }
-
-        .summary-item { float: left; width: 33.33%; font-size: 9pt; }
-        .summary-item label { display: block; color: #94a3b8; font-weight: bold; text-transform: uppercase; font-size: 7pt; }
-        .summary-item span { color: #1e293b; font-weight: 600; }
-
-        /* Tabela Profissional */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        
-        th { 
-            background-color: #0f172a; 
-            color: #ffffff; 
-            text-align: left; 
-            padding: 12px 10px; 
-            font-size: 8pt; 
-            text-transform: uppercase; 
+        /* Selo de Documento */
+        .doc-badge {
+            display: inline-block;
+            background: #f1f5f9;
+            color: #475569;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 8pt;
+            font-weight: 800;
+            margin-top: 15px;
+            text-transform: uppercase;
             letter-spacing: 1px;
         }
 
+        /* Resumo Principal */
+        .summary-wrapper {
+            margin: 30px 0;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .summary-grid {
+            background: #ffffff;
+            padding: 20px;
+            display: table;
+            width: 100%;
+        }
+
+        .summary-item { display: table-cell; width: 33.33%; }
+        .summary-item label { 
+            display: block; 
+            color: #94a3b8; 
+            font-weight: 800; 
+            text-transform: uppercase; 
+            font-size: 7pt; 
+            margin-bottom: 4px;
+        }
+        .summary-item span { color: #1e293b; font-weight: 700; font-size: 11pt; }
+
+        /* Tabela de Itens */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+        
+        th { 
+            background-color: #f8fafc; 
+            color: #64748b; 
+            text-align: left; 
+            padding: 15px 12px; 
+            font-size: 7.5pt; 
+            text-transform: uppercase; 
+            font-weight: 800;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
         td { 
-            padding: 12px 10px; 
+            padding: 15px 12px; 
             border-bottom: 1px solid #f1f5f9; 
             font-size: 10pt; 
-            color: #334155;
         }
 
-        .row-even { background-color: #fafafa; }
+        .product-name { color: #0f172a; font-weight: 700; display: block; }
+        .product-sub { font-size: 8pt; color: #94a3b8; font-weight: 400; }
 
-        /* Rodapé de Totais */
-        .footer-section { margin-top: 30px; }
+        /* Rodapé de Pagamento */
+        .footer-container { margin-top: 40px; }
         
+        .payment-info { float: left; width: 50%; }
+        .payment-info h3 { font-size: 9pt; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+        .payment-card { 
+            background: #f8fafc; 
+            padding: 15px; 
+            border-radius: 12px; 
+            border: 1px solid #f1f5f9;
+            font-size: 8.5pt;
+        }
+
         .total-box { 
             float: right; 
-            width: 250px; 
+            width: 220px; 
             background: #0f172a; 
             color: white; 
-            padding: 20px; 
-            border-radius: 12px;
-            text-align: right;
+            padding: 25px; 
+            border-radius: 20px; 
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
         }
 
-        .total-box label { display: block; font-size: 8pt; color: #94a3b8; margin-bottom: 5px; }
-        .total-box strong { font-size: 18pt; font-weight: 800; }
+        .total-box label { display: block; font-size: 7pt; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
+        .total-box strong { font-size: 20pt; font-weight: 900; color: #ffffff; }
 
+        /* Rodapé Final */
         .thanks { 
-            margin-top: 100px; 
+            position: absolute;
+            bottom: 40px;
+            left: 40px;
+            right: 40px;
             text-align: center; 
-            font-size: 9pt; 
-            color: #94a3b8; 
+            font-size: 8pt; 
+            color: #cbd5e1; 
             border-top: 1px solid #f1f5f9; 
-            padding-top: 20px; 
+            padding-top: 30px; 
         }
     </style>
 </head>
 <body>
+    <div class="top-bar"></div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="logo-box">
+                <img src="file://{{ logo }}" class="logo-img">
+                <div class="doc-badge">Comprovante de Venda</div>
+            </div>
+            <div class="company-info">
+                <h1>JML. <span style="color: #3b82f6;">Eletrônica</span></h1>
+                <p>Rua da Tecnologia, 123 - Recife/PE</p>
+                <p>CNPJ: 48.998.042/0001-90</p>
+                <p><strong>Contato:</strong> (81) 97914-0738</p>
+            </div>
+            <div class="clear"></div>
+        </div>
 
-    <div class="header">
-        <div class="logo-box">
-            <img src="file://{{ logo }}" class="logo-img">
+        <div class="summary-wrapper">
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <label>Cliente</label>
+                    <span>{{ cliente if cliente else "Consumidor Final" }}</span>
+                </div>
+                <div class="summary-item" style="text-align: center;">
+                    <label>Nº Pedido</label>
+                    <span style="color: #3b82f6;">#{{ numero_nota }}</span>
+                </div>
+                <div class="summary-item" style="text-align: right;">
+                    <label>Data de Emissão</label>
+                    <span>{{ data }}</span>
+                </div>
+            </div>
         </div>
-        <div class="company-info">
-            <h1>GIL ELETRÔNICOS</h1>
-            <p>Rua da Tecnologia, 123 - Recife/PE</p>
-            <p>CNPJ: 00.000.000/0001-00</p>
-            <p>Contato: (81) 99999-9999</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="border-radius: 12px 0 0 0;">Item e Descrição</th>
+                    <th style="width: 60px; text-align: center;">Qtd</th>
+                    <th style="width: 110px; text-align: right;">Unitário</th>
+                    <th style="width: 130px; text-align: right; border-radius: 0 12px 0 0;">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in itens %}
+                <tr>
+                    <td>
+                        <span class="product-name">{{ item.nome }}</span>
+                        <span class="product-sub">Peça/Serviço Garantido</span>
+                    </td>
+                    <td style="text-align: center; color: #64748b;">{{ item.quantidade }}</td>
+                    <td style="text-align: right;">R$ {{ "%.2f"|format(item.preco|float) }}</td>
+                    <td style="text-align: right; font-weight: 800; color: #0f172a;">R$ {{ "%.2f"|format(item.subtotal|float) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer-container">
+            <div class="payment-info">
+                <h3>Informações Complementares</h3>
+                <div class="payment-card">
+                    Este documento não possui valor de nota fiscal eletrônica (NF-e) e serve exclusivamente para fins de conferência interna e garantia dos produtos listados.
+                </div>
+            </div>
+            <div class="total-box">
+                <label>Total a Pagar</label>
+                <strong>R$ {{ total }}</strong>
+            </div>
+            <div class="clear"></div>
         </div>
-        <div class="clear"></div>
+
+        <div class="thanks">
+            <p>Gerado automaticamente por JML Eletrônica e Informática</p>
+            <p style="font-weight: 800; color: #94a3b8; margin-top: 5px;">OBRIGADO PELA PREFERÊNCIA!</p>
+        </div>
     </div>
-
-    <div class="summary-grid">
-        <div class="summary-item">
-            <label>Cliente</label>
-            <span>{{ cliente if cliente else "Consumidor Final" }}</span>
-        </div>
-        <div class="summary-item">
-            <label>Nº do Documento</label>
-            <span>#{{ numero_nota }}</span>
-        </div>
-        <div class="summary-item" style="text-align: right;">
-            <label>Data de Emissão</label>
-            <span>{{ data }}</span>
-        </div>
-        <div class="clear"></div>
-    </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th style="border-radius: 8px 0 0 8px;">Descrição do Produto</th>
-                <th style="width: 50px; text-align: center;">Qtd</th>
-                <th style="width: 100px; text-align: right;">Unitário</th>
-                <th style="width: 120px; text-align: right; border-radius: 0 8px 8px 0;">Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in itens %}
-            <tr>
-                <td style="font-weight: 600;">{{ item.nome }}</td>
-                <td style="text-align: center;">{{ item.quantidade }}</td>
-                <td style="text-align: right;">R$ {{ item.preco }}</td>
-                <td style="text-align: right; font-weight: 700;">R$ {{ item.subtotal }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="footer-section">
-        <div class="total-box">
-            <label>Valor Total da Nota</label>
-            <strong>R$ {{ total }}</strong>
-        </div>
-        <div class="clear"></div>
-    </div>
-
-    <div class="thanks">
-        <p>Este documento é um comprovante de venda para simples conferência.</p>
-        <p><strong>Obrigado pela confiança!</strong></p>
-    </div>
-
 </body>
 </html>
+

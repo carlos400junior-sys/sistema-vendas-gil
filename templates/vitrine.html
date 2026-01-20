@@ -50,7 +50,7 @@
             </div>
 
             <!-- Formulário com Botões +/- -->
-            <form action="{{ url_for('adicionar_item') }}" method="POST" class="space-y-2">
+            <form action="{{ url_for('adicionar_itens_cliente') }}" method="POST" class="space-y-2">
               <input type="hidden" name="nome" value="{{ produto.nome }}">
               <input type="hidden" name="preco" value="{{ produto.preco }}">
               <input type="hidden" name="imagem" value="{{ produto.foto }}">
@@ -81,15 +81,24 @@
 
         <div class="space-y-3 max-h-[400px] overflow-y-auto mb-4">
           {% if orcamento %}
-            {% for item in orcamento %}
-            <div class="flex gap-2 items-center p-2 bg-gray-50 rounded-lg">
-              <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" class="w-8 h-8 object-cover rounded">
-              <div class="min-w-0 flex-1">
-                <p class="text-[11px] font-bold text-gray-800 truncate">{{ item.nome }}</p>
-                <p class="text-[10px] text-blue-600 font-bold">{{ item.quantidade }}x R$ {{ item.preco }}</p>
-              </div>
-            </div>
-            {% endfor %}
+   {% for item in orcamento %}
+<div class="flex gap-2 items-center p-2 bg-gray-50 rounded-lg group">
+  <img src="{{ url_for('static', filename='uploads/' + item.imagem) }}" class="w-8 h-8 object-cover rounded">
+  <div class="min-w-0 flex-1">
+    <p class="text-[11px] font-bold text-gray-800 truncate">{{ item.nome }}</p>
+    <p class="text-[10px] text-blue-600 font-bold">{{ item.quantidade }}x R$ {{ item.preco }}</p>
+  </div>
+  <!-- Botão de Remover -->
+  <a href="{{ url_for('remover_item', indice=loop.index0) }}" 
+     class="text-gray-400 hover:text-red-500 transition-colors p-1" 
+     title="Remover item">
+    <svg xmlns="http://www.w3.org" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m4 0H9" />
+    </svg>
+  </a>
+</div>
+{% endfor %}
+
           {% else %}
             <p class="text-center text-xs text-gray-400 py-10 italic">Carrinho vazio</p>
           {% endif %}
@@ -101,9 +110,8 @@
             <span class="text-xs font-bold text-gray-500">TOTAL</span>
             <span class="text-xl font-black text-blue-600">R$ {{ total }}</span>
           </div>
-          <button onclick="enviarWhatsapp()" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold text-xs hover:bg-green-600 flex items-center justify-center gap-2">
-            Finalizar WhatsApp
-          </button>
+
+
           <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-3 text-[9px] text-gray-400 uppercase hover:text-red-500">Esvaziar</a>
         </div>
         {% endif %}

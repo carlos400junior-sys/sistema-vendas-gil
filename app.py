@@ -226,13 +226,7 @@ def orcamento():
                            orcamento=session.get('carrinho', []), 
                            total=f"{total:.2f}")
 
-def adicionar_item():
-    carrinho = session.get('carrinho', [])
-    p, q = float(request.form["preco"]), int(request.form["quantidade"])
-    carrinho.append({'nome': request.form["nome"], 'preco': p, 'quantidade': q, 'subtotal': p * q})
-    session['carrinho'] = carrinho
-    session.modified = True
-    return redirect(url_for('orcamento'))
+
 
 @app.route("/historico", methods=["GET", "POST"])
 @login_required # Garanta que o decorador esteja aqui se quiser proteção
@@ -367,10 +361,49 @@ def cadastrar_cliente():
             conn.close()
         return redirect(url_for("clientes"))
     return render_template("cadastrar_cliente.html")
-
-
-@app.route("/adicionar_item", methods=["POST"])
+@app.route('/adicionar_item', methods=['POST'])
 def adicionar_item():
+    # Pega o que está na sessão. Se não existir, garante uma lista REALMENTE nova []
+    # Usar list() garante que não estamos pegando uma referência fantasma
+    itens_atuais = list(session.get('orcamento', []))
+
+    nome = request.form.get('nome')
+    preco = float(request.form.get('preco'))
+    quantidade = int(request.form.get('quantidade', 1))
+
+    item_encontrado = False
+    for item in itens_atuais:
+        if item['nome'] == nome:
+            item['quantidade'] += quantidade
+            item['subtotal'] = item['quantidade'] * item['preco']
+            item_encontrado = True
+            break
+    
+    if not item_encontrado:
+        itens_atuais.append({
+            'nome': nome,
+            'preco': preco,
+            'quantidade': quantidade,
+            'subtotal': preco * quantidade
+        })
+
+    # Sobrescreve a sessão com a lista nova
+    session['orcamento'] = itens_atuais
+    session.modified = True
+
+    total_geral = sum(item['subtotal'] for item in itens_atuais)
+
+    return jsonify({
+        'carrinho': itens_atuais,
+        'total': f"{total_geral:.2f}"
+    })
+
+
+
+
+
+@app.route("/adicionar_itens_cliente", methods=["POST"])
+def adicionar_itens_cliente():
     # Pega o orçamento atual da sessão (usando o nome que a rota /loja usa)
     orcamento = session.get('orcamento', [])
     
@@ -410,17 +443,26 @@ def adicionar_item():
     session.modified = True
     
     # Redireciona para a vitrine (rota loja) focando na div #carrinho
-    return redirect(url_for('loja') + '#carrinho')
+    return redirect(url_for('loja') + '#resumo-venda')
 
 
 
 @app.route("/limpar_carrinho")
 def limpar_carrinho():
-    # Remove o carrinho e o cliente selecionado da sessão
+    # Limpa as chaves e força a limpeza física da sessão
+    session.pop('orcamento', None)
     session.pop('carrinho', None)
-    session.pop('cliente_selecionado', None)
-    # Redireciona de volta para a página de orçamento vazia
+    session.pop('pix_data', None)
+    
+    # Isso limpa qualquer resquício de dicionário da sessão
+    session.modified = True 
+    
+    # Opcional: limpa TUDO da sessão se nada mais for importante
+    # session.clear() 
+
     return redirect(url_for('orcamento'))
+
+
 
 
 
@@ -582,6 +624,52 @@ def registrar():
 def logout():
     session.clear() # Limpa o usuario_id e o carrinho
     return redirect(url_for('login'))
+
+@app.route('/remover_item/<int:indice>')
+def remover_item(indice):
+    # Recupera o carrinho da sessão
+    orcamento = session.get('orcamento', [])
+    
+    # Verifica se o índice é válido e remove
+    if 0 <= indice < len(orcamento):
+        orcamento.pop(indice)
+        session['orcamento'] = orcamento
+        session.modified = True # Avisa ao Flask que a sessão mudou
+        
+    # Redireciona de volta para a loja (ajuste 'loja' se o nome da sua rota for outro)
+    return redirect(url_for('loja') + '#carrinho')
+
+@app.route('/excluir_peca/<int:id>', methods=['POST'])
+@login_required
+def excluir_peca(id):
+    conn = get_db()
+    cur = conn.cursor()
+    try:
+        # 1. Busca a foto para deletar do servidor também
+        cur.execute("SELECT foto FROM pecas WHERE id = %s", (id,))
+        resultado = cur.fetchone()
+        
+        # 2. Deleta do banco de dados
+        cur.execute("DELETE FROM pecas WHERE id = %s", (id,))
+        conn.commit()
+
+        # 3. Se tinha foto, apaga o arquivo físico
+        if resultado and resultado[0]:
+            caminho_foto = os.path.join(app.root_path, 'static/uploads', resultado[0])
+            if os.path.exists(caminho_foto):
+                os.remove(caminho_foto)
+
+    except Exception as e:
+        conn.rollback()
+        print(f"Erro ao excluir: {e}")
+    finally:
+        cur.close()
+        conn.close()
+    
+    # 🎯 Aqui está o segredo: redireciona para a FUNÇÃO estoque, não para o arquivo html
+    return redirect(url_for('estoque'))
+
+
 
 
 if __name__ == "__main__":

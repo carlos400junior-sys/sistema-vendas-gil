@@ -1,64 +1,117 @@
 {% extends "base.html" %}
 {% block conteudo %}
-<div class="max-w-2xl mx-auto py-10">
-    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-10">
-        <h1 class="text-3xl font-black text-slate-900 mb-8 text-center">Nova Peça</h1>
+
+<div class="max-w-2xl mx-auto py-10 px-4 animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div class="bg-white/80 backdrop-blur-xl rounded-[3rem] border border-white shadow-[0_32px_64px_-15px_rgba(0,0,0,0.1)] p-8 md:p-12 relative overflow-hidden">
         
-        <form method="POST" enctype="multipart/form-data" class="space-y-6">
-            <!-- Upload de Foto com Preview -->
-            <div class="relative group h-48 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:bg-slate-100 transition-all cursor-pointer overflow-hidden">
-                <input type="file" name="foto" id="foto-input" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*">
+        <!-- Detalhe Decorativo de Fundo -->
+        <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
+        
+        <header class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-slate-900 text-white rounded-2xl mb-4 shadow-lg rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                <span class="text-2xl">📦</span>
+            </div>
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Nova Peça</h1>
+            <p class="text-slate-400 font-medium">Preencha os detalhes para atualizar o estoque</p>
+        </header>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-8 relative">
+            
+            <!-- Upload de Foto Estilizado -->
+            <div class="group relative h-64 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center hover:border-blue-400 hover:bg-blue-50/30 transition-all cursor-pointer overflow-hidden shadow-inner">
+                <input type="file" name="foto" id="foto-input" class="absolute inset-0 opacity-0 cursor-pointer z-20" accept="image/*">
                 
-                <!-- Imagem que aparecerá após selecionar o arquivo -->
-                <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden">
+                <!-- Preview Overlay -->
+                <img id="preview" class="absolute inset-0 w-full h-full object-cover hidden z-10 group-hover:scale-105 transition-transform duration-700">
                 
-                <div id="placeholder" class="flex flex-col items-center justify-center">
-                    <span class="text-4xl mb-2">📸</span>
-                    <p class="text-xs font-black text-slate-400 uppercase">Clique para enviar a foto</p>
+                <div id="placeholder" class="flex flex-col items-center justify-center z-0 group-hover:scale-110 transition-transform duration-300">
+                    <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 text-3xl">📸</div>
+                    <p class="text-xs font-black text-slate-400 uppercase tracking-widest">Toque para enviar foto</p>
+                    <p class="text-[10px] text-slate-300 mt-1 uppercase font-bold">PNG, JPG até 5MB</p>
+                </div>
+
+                <!-- Botão de Remover (Aparece no Preview) -->
+                <button type="button" id="remove-photo" class="absolute top-4 right-4 z-30 bg-white/90 backdrop-blur text-red-500 p-2 rounded-xl shadow-lg hidden hover:bg-red-500 hover:text-white transition-all">
+                    <span class="text-lg">✕</span>
+                </button>
+            </div>
+
+            <!-- Campos de Texto -->
+            <div class="space-y-6">
+                <div class="group">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-4 mb-2 block">Nome do Produto</label>
+                    <input type="text" name="nome" required 
+                        placeholder="Ex: Amortecedor Dianteiro"
+                        class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 focus:bg-white focus:border-blue-500/20 focus:ring-[12px] focus:ring-blue-500/5 outline-none font-bold text-slate-700 transition-all placeholder:text-slate-300">
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="group">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-4 mb-2 block">Preço Unitário</label>
+                        <div class="relative">
+                            <span class="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400">R$</span>
+                            <input type="number" step="0.01" name="preco" required 
+                                class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 focus:bg-white focus:border-blue-500/20 focus:ring-[12px] focus:ring-blue-500/5 outline-none font-bold text-slate-700 transition-all">
+                        </div>
+                    </div>
+                    <div class="group">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-4 mb-2 block">Quantidade</label>
+                        <input type="number" name="quantidade" required 
+                            class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 focus:bg-white focus:border-blue-500/20 focus:ring-[12px] focus:ring-blue-500/5 outline-none font-bold text-slate-700 transition-all">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-4 mb-2 block">Categoria / Descrição</label>
+                    <input type="text" name="categoria" 
+                        placeholder="Ex: Motor, Suspensão, Freios..."
+                        class="w-full bg-slate-50 border-2 border-transparent rounded-2xl py-4 px-6 focus:bg-white focus:border-blue-500/20 focus:ring-[12px] focus:ring-blue-500/5 outline-none font-bold text-slate-700 transition-all placeholder:text-slate-300">
                 </div>
             </div>
 
-            <div>
-                <label class="text-xs font-black text-slate-400 uppercase block mb-2">Nome do Produto</label>
-                <input type="text" name="nome" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-xs font-black text-slate-400 uppercase block mb-2">Preço (R$)</label>
-                    <input type="number" step="0.01" name="preco" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
-                </div>
-                <div>
-                    <label class="text-xs font-black text-slate-400 uppercase block mb-2">Quantidade</label>
-                    <input type="number" name="quantidade" required class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
-                </div>
-            </div>
-
-            <div>
-                <label class="text-xs font-black text-slate-400 uppercase block mb-2">Categoria</label>
-                <input type="text" name="categoria" placeholder="Ex: Motor, Suspensão..." class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 outline-none font-bold">
-            </div>
-
-            <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-600 transition-all">
-                SALVAR PRODUTO
+            <!-- Botão de Ação -->
+            <button type="submit" 
+                class="w-full bg-slate-900 hover:bg-blue-600 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-slate-200 hover:shadow-blue-200 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-3">
+                <span>📦</span> SALVAR PRODUTO NO ESTOQUE
             </button>
         </form>
     </div>
 </div>
 
 <script>
-    // Lógica para mostrar a foto na tela antes de enviar o formulário
-    document.getElementById('foto-input').onchange = function (evt) {
+    const input = document.getElementById('foto-input');
+    const preview = document.getElementById('preview');
+    const placeholder = document.getElementById('placeholder');
+    const removeBtn = document.getElementById('remove-photo');
+
+    input.onchange = function (evt) {
         const [file] = this.files;
         if (file) {
-            const preview = document.getElementById('preview');
-            const placeholder = document.getElementById('placeholder');
             preview.src = URL.createObjectURL(file);
             preview.classList.remove('hidden');
             placeholder.classList.add('hidden');
+            removeBtn.classList.remove('hidden');
         }
     }
+
+    removeBtn.onclick = function(e) {
+        e.preventDefault();
+        input.value = "";
+        preview.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        removeBtn.classList.add('hidden');
+    }
 </script>
+
+<style>
+    /* Animação de entrada suave */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+</style>
+
 {% endblock %}
-
-

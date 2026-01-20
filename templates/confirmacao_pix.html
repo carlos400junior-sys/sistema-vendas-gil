@@ -2,61 +2,162 @@
 {% block conteudo %}
 
 <div class="max-w-2xl mx-auto py-10 px-4">
-    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-6 md:p-10 text-center">
+    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl p-6 md:p-10 text-center transition-all duration-300">
         
-        <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-3 border border-blue-100">
+        <!-- Ícone Animado (usando AOS) -->
+        <div data-aos="flip-right" data-aos-duration="1000"
+             class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-6 rotate-3 border border-blue-100 shadow-md">
             <span class="text-4xl">⚡</span>
         </div>
 
-        <h1 class="text-3xl font-black text-slate-900 mb-2">Quase lá!</h1>
-        <p class="text-slate-500 mb-8">Pague via Pix para finalizar sua compra de <br>
+        <h1 class="text-3xl font-black text-slate-900 mb-2" data-aos="fade-up" data-aos-delay="200">Quase lá!</h1>
+        <p class="text-slate-500 mb-8" data-aos="fade-up" data-aos-delay="300">Pague para finalizar sua compra de <br>
             <span class="text-2xl font-black text-blue-600">R$ {{ data.total }}</span>
         </p>
 
-        <!-- QR CODE -->
-        <div class="bg-slate-50 p-6 md:p-8 rounded-[2rem] border-2 border-dashed border-slate-200 mb-8">
-            <div class="w-56 h-56 bg-white mx-auto rounded-2xl flex items-center justify-center p-2 shadow-inner">
-                <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ data.payload|urlencode }}" 
-                     alt="QR Code Pix" 
-                     class="w-full h-full object-contain">
-            </div>
-            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Escaneie o código acima com o app do seu banco</p>
+        <!-- ABAS DE SELEÇÃO PIX/CARTÃO -->
+        <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl mb-8" data-aos="fade-up" data-aos-delay="400">
+            <button onclick="setTab('pix')" id="btn-pix" class="flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-white shadow-sm text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">⚡ PIX</button>
+            <button onclick="setTab('card')" id="btn-card" class="flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 text-slate-500 hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">💳 CARTÃO</button>
         </div>
+        
+        <!-- CONTEÚDO DO PIX (Visível por padrão) -->
+        <div id="pix-content" class="transition-opacity duration-300 ease-in-out">
+            <!-- QR CODE -->
+            <div class="bg-slate-50 p-6 md:p-8 rounded-[2rem] border-2 border-dashed border-slate-200 mb-8">
+                <div class="w-56 h-56 bg-white mx-auto rounded-2xl flex items-center justify-center p-2 shadow-inner transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ data.payload|urlencode }}" 
+                         alt="QR Code Pix" 
+                         class="w-full h-full object-contain">
+                </div>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Escaneie o código acima com o app do seu banco</p>
+            </div>
 
-        <div class="text-left mb-8">
-            <label class="text-xs font-black text-slate-400 uppercase mb-2 block ml-2">Pix Copia e Cola</label>
-            <div class="relative group">
-                <input type="text" id="pixCode" readonly value="{{ data.payload }}" 
-                    class="w-full bg-slate-100 border-none rounded-2xl py-4 px-6 pr-24 font-mono text-sm text-slate-600 outline-none ring-2 ring-transparent focus:ring-blue-500/20 transition-all">
-                <button onclick="copiarPix()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all">
-                    COPIAR
+            <div class="text-left mb-8">
+                <label class="text-xs font-black text-slate-400 uppercase mb-2 block ml-2">Pix Copia e Cola</label>
+                <div class="relative group">
+                    <input type="text" id="pixCode" readonly value="{{ data.payload }}" 
+                        class="w-full bg-slate-100 border-none rounded-2xl py-4 px-6 pr-24 font-mono text-sm text-slate-600 outline-none ring-2 ring-transparent focus:ring-blue-500/20 transition-all">
+                    <button onclick="copiarPix()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all transform hover:scale-105">
+                        COPIAR
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- FIM CONTEÚDO PIX -->
+
+        <!-- CONTEÚDO DO CARTÃO (Oculto por padrão) -->
+        <div id="card-section" class="hidden text-left space-y-4 transition-opacity duration-300 ease-in-out">
+            <form id="payment-form" class="space-y-4">
+                <!-- Seus campos de cartão com estilo Tailwind -->
+                 <div>
+                    <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Nome no Cartão</label>
+                    <input type="text" placeholder="Seu Nome Completo" class="input-field">
+                </div>
+                <div>
+                    <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Número do Cartão</label>
+                    <input type="text" placeholder="0000 0000 0000 0000" class="input-field">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Validade</label>
+                        <input type="text" placeholder="MM/AA" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">CVV</label>
+                        <input type="text" placeholder="123" class="input-field">
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105">
+                    FINALIZAR PAGAMENTO
                 </button>
-            </div>
+            </form>
         </div>
+        <!-- FIM CONTEÚDO CARTÃO -->
 
-        <div class="grid grid-cols-1 gap-4">
-            <a href="/baixar_pdf/{{ data.numero_nota }}" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-blue-600 transition-all">
+
+        <div class="grid grid-cols-1 gap-4 mt-8">
+            <a href="/baixar_pdf/{{ data.numero_nota }}" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-blue-600 transition-all transform hover:scale-105">
                 <span>📄</span> BAIXAR NOTA FISCAL
             </a>
-            <a href="/" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest">
+            <a href="/" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest mt-4">
                 Voltar ao Início
             </a>
         </div>
 
         <p class="mt-8 text-[10px] text-slate-400 italic font-bold">
-            Chave: carlinha14.fernandes@gmail.com
+            Chave Pix: carlinha14.fernandes@gmail.com
         </p>
     </div>
 </div>
 
+<!-- Scripts -->
+<script src="https://unpkg.com"></script>
 <script>
-function copiarPix() {
-    var copyText = document.getElementById("pixCode");
-    copyText.select();
-    copyText.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(copyText.value);
-    alert("Código copiado com sucesso!");
-}
+    // Inicializa a biblioteca AOS para as animações de scroll/load
+    AOS.init();
+
+    // Adicionando uma classe CSS reutilizável para inputs
+    // Isso deve ser adicionado ao seu arquivo CSS principal se você tiver um
+    const style = document.createElement('style');
+    style.innerHTML = `.input-field {
+        @apply w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all;
+    }`;
+    document.head.appendChild(style);
+
+
+    function copiarPix() {
+        var copyText = document.getElementById("pixCode");
+        copyText.select();
+        copyText.setSelectionRange(0, 99999);
+        navigator.clipboard.writeText(copyText.value);
+        
+        // Animação de feedback de cópia em JS
+        const copyButton = document.querySelector('#pixCode + button');
+        copyButton.textContent = 'COPIADO! 🎉';
+        setTimeout(() => {
+            copyButton.textContent = 'COPIAR';
+        }, 1500);
+    }
+
+    // Função para alternar entre PIX e CARTÃO com animações
+    function setTab(type) {
+        const pixContent = document.getElementById('pix-content');
+        const cardSection = document.getElementById('card-section');
+        const btnPix = document.getElementById('btn-pix');
+        const btnCard = document.getElementById('btn-card');
+
+        // Adiciona classe de opacidade para efeito fade out antes de esconder
+        if (type === 'pix') {
+            cardSection.classList.add('opacity-0');
+            setTimeout(() => {
+                cardSection.classList.add('hidden');
+                pixContent.classList.remove('hidden');
+                setTimeout(() => pixContent.classList.remove('opacity-0'), 10);
+            }, 300); // Espera a transição de opacidade acabar
+
+            // Estilos dos botões
+            btnPix.className = "flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-white shadow-sm text-blue-600";
+            btnCard.className = "flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 text-slate-500 hover:bg-white/50";
+        } else { // type === 'card'
+            pixContent.classList.add('opacity-0');
+            setTimeout(() => {
+                pixContent.classList.add('hidden');
+                cardSection.classList.remove('hidden');
+                setTimeout(() => cardSection.classList.remove('opacity-0'), 10);
+            }, 300); // Espera a transição de opacidade acabar
+
+            // Estilos dos botões
+            btnCard.className = "flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-white shadow-sm text-blue-600";
+            btnPix.className = "flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 text-slate-500 hover:bg-white/50";
+        }
+    }
+
+    // Lidar com o envio do formulário (Lembrete de backend necessário)
+    document.getElementById('payment-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        alert("Integração com gateway de pagamento (Stripe/Mercado Pago) necessária no backend Python.");
+    });
 </script>
 
 {% endblock %}

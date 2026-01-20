@@ -1,170 +1,272 @@
 {% extends "base.html" %}
 {% block conteudo %}
 
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <!-- Cabeçalho -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Checkout de Vendas</h1>
-            <p class="text-slate-500">Gerencie produtos e emita notas rapidamente.</p>
+<div class="max-w-7xl mx-auto px-4 py-8 animate-in fade-in duration-700">
+
+    <!-- CABEÇALHO COM DESIGN MODERNO -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6">
+        <div class="space-y-1">
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight">
+                Checkout de <span class="text-blue-600">Vendas</span>
+            </h1>
+            <p class="text-slate-500 font-medium flex items-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                Vitrine de produtos e emissão rápida
+            </p>
         </div>
-        
-        <!-- Badge Cliente -->
-        <div class="flex items-center gap-4 bg-white p-2 pr-4 rounded-2xl shadow-sm border border-slate-200">
-            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-xl">
+
+        <!-- CARD DO CLIENTE ESTILIZADO -->
+        <div class="group flex items-center gap-4 bg-white/80 backdrop-blur-md p-3 pr-6 rounded-[2rem] shadow-xl shadow-slate-200/50 border border-white hover:border-blue-200 transition-all duration-300">
+            <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg shadow-blue-200 group-hover:rotate-6 transition-transform">
                 👤
             </div>
             <div>
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Cliente</span>
-                <p class="text-slate-900 font-bold block">
-                    {{ session.get('cliente_selecionado', 'Consumidor não identificado') }}
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-0.5">Cliente Selecionado</span>
+                <p class="font-black text-slate-800 text-lg leading-tight">
+                    {{ session.get('cliente_selecionado', 'Consumidor Final') }}
                 </p>
             </div>
-            <a href="{{ url_for('clientes') }}" class="ml-4 p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                🔄
+            <a href="{{ url_for('clientes') }}" 
+               title="Trocar Cliente"
+               class="ml-auto w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                <span class="text-xl">🔄</span>
             </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- COLUNA ESQUERDA: BUSCA E RESULTADOS -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Barra de Busca -->
-            <form method="POST" class="relative group">
-                <input type="text" name="pesquisa" 
-                    class="w-full bg-white border-2 border-slate-200 rounded-2xl py-4 px-6 pl-14 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all text-lg shadow-sm"
-                    placeholder="Pesquisar peça ou serviço..." value="{{ request.form.get('pesquisa', '') }}" autofocus>
-                <div class="absolute left-5 top-1/2 -translate-y-1/2 text-2xl">🔍</div>
-                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-6 py-2 rounded-xl font-bold hover:bg-slate-800 transition-all">
-                    Buscar
+    <!-- GRID PRINCIPAL COM ANIMAÇÃO DE ENTRADA -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 animate-in slide-in-from-bottom-10 duration-1000 ease-out">
+
+
+<!-- PRODUTOS -->
+<div class="lg:col-span-2 space-y-8">
+    <!-- Barra de Busca Moderna -->
+    <form method="POST" class="relative group">
+        <input type="text" name="pesquisa"
+            class="w-full border-none bg-white rounded-[2rem] py-5 px-8 pl-16 text-lg shadow-lg shadow-slate-200/50 ring-1 ring-slate-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+            placeholder="O que você está procurando hoje?">
+        <div class="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40 group-focus-within:text-blue-500 group-focus-within:opacity-100 transition-all">🔍</div>
+        <button type="submit"
+            class="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-bold shadow-md transition-all active:scale-95">
+            Buscar
+        </button>
+    </form>
+
+    {% if pecas %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for peca in pecas %}
+        <div class="group bg-white p-5 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 flex flex-col">
+            
+            <div class="aspect-square bg-slate-50 rounded-[2rem] mb-4 overflow-hidden flex items-center justify-center relative">
+                {% if peca.foto %}
+                <img src="{{ url_for('static', filename='uploads/' + peca.foto) }}"
+                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                {% else %}
+                <span class="text-4xl text-slate-300">📦</span>
+                {% endif %}
+            </div>
+
+            <div class="px-2 flex-grow">
+                <h3 class="font-bold text-slate-800 text-lg mb-1 leading-tight">{{ peca.nome }}</h3>
+                <p class="text-blue-600 font-black text-xl mb-4">R$ {{ "%.2f"|format(peca.preco) }}</p>
+            </div>
+
+            <!-- Formulário de Adicionar -->
+            <form id="form-add-{{ loop.index }}" class="mt-auto space-y-3">
+                <input type="hidden" name="nome" value="{{ peca.nome }}">
+                <input type="hidden" name="preco" value="{{ peca.preco }}">
+                <input type="hidden" name="imagem" value="{{ peca.foto }}">
+                
+                <!-- Seletor + e - Corrigido -->
+                <div class="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl items-center">
+                    <button type="button" 
+                        onclick="const inp = this.nextElementSibling; if(inp.value > 1) inp.stepDown()" 
+                        class="h-10 flex items-center justify-center bg-white rounded-xl shadow-sm hover:bg-red-50 hover:text-red-500 transition-colors font-bold text-xl">
+                        −
+                    </button>
+                    <input type="number" name="quantidade" value="1" min="1" readonly
+                           class="bg-transparent text-center font-bold text-slate-700 border-none focus:ring-0 text-lg w-full [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                    <button type="button" 
+                        onclick="this.previousElementSibling.stepUp()" 
+                        class="h-10 flex items-center justify-center bg-white rounded-xl shadow-sm hover:bg-green-50 hover:text-green-500 transition-colors font-bold text-xl">
+                        +
+                    </button>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-900 hover:bg-blue-600 text-white rounded-2xl py-4 font-black text-sm tracking-widest uppercase transition-all flex items-center justify-center gap-2 active:scale-95 shadow-lg">
+                    <span>🛒</span> Adicionar
                 </button>
             </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
 
-            <!-- Tabela de Resultados -->
-            {% if pecas %}
-            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-50/50 border-bottom border-slate-100">
-                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest w-24">Foto</th>
-                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Produto</th>
-                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Preço</th>
-                            <th class="px-6 py-4 text-slate-500 font-bold text-xs uppercase tracking-widest">Quantidade</th>
-                            <th class="px-6 py-4 text-right"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-100">
-                        {% for peca in pecas %}
-                        <tr class="hover:bg-slate-50/50 transition-colors">
-                            <form action="{{ url_for('adicionar_item') }}" method="POST">
-                                <!-- Coluna da Foto -->
-                                <td class="px-6 py-4">
-                                    <div class="w-16 h-16 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
-                                        {% if peca.imagem %}
-                                            <img src="{{ url_for('static', filename='img/' + peca.imagem) }}" 
-                                                 alt="{{ peca.nome }}" 
-                                                 class="w-full h-full object-cover">
-                                        {% else %}
-                                            <span class="text-2xl text-slate-300">📦</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
+<!-- CARRINHO -->
+<div class="lg:col-span-1">
+    <div id="card-carrinho"
+        class="bg-white/90 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-white p-6 sticky top-8 flex flex-col min-h-[500px] transition-all duration-500">
 
-                                <td class="px-6 py-4">
-                                    <span class="font-bold text-slate-800 block">{{ peca.nome }}</span>
-                                    <span class="text-xs text-slate-400">ID: {{ peca.id if peca.id else 'N/A' }}</span>
-                                </td>
-                                <td class="px-6 py-4 font-semibold text-slate-600">R$ {{ "%.2f"|format(peca.preco) }}</td>
-                                <td class="px-6 py-4">
-                                    <input type="number" name="quantidade" value="1" min="1" 
-                                        class="w-16 p-2 rounded-lg border border-slate-200 focus:border-blue-500 outline-none">
-                                </td>
-                                
-                                <!-- Hidden Inputs para o Carrinho -->
-                                <input type="hidden" name="nome" value="{{ peca.nome }}">
-                                <input type="hidden" name="preco" value="{{ peca.preco }}">
-                                <input type="hidden" name="imagem" value="{{ peca.imagem }}">
+        <!-- Header do Carrinho -->
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-black text-2xl text-slate-800 flex items-center gap-2">
+                <span class="bg-slate-100 w-10 h-10 flex items-center justify-center rounded-xl">🛒</span>
+                Carrinho
+            </h2>
+            <span class="bg-blue-100 text-blue-600 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">Checkout</span>
+        </div>
 
-                                <td class="px-6 py-4 text-right">
-                                    <button type="submit" class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-all">
-                                        ＋ Adicionar
-                                    </button>
-                                </td>
-                            </form>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <!-- Lista de Itens -->
+        <div id="lista-carrinho" class="flex-grow overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+            {% if orcamento %}
+                {% for item in orcamento %}
+                <div class="group flex justify-between items-center bg-slate-50/50 p-4 rounded-2xl border border-slate-100 hover:bg-white hover:shadow-md transition-all animate-in fade-in slide-in-from-right-4">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">{{ item.nome }}</span>
+                        <span class="text-xs font-medium text-slate-400">{{ item.quantidade }}x unidades</span>
+                    </div>
+                    <strong class="text-slate-900 font-black">R$ {{ "%.2f"|format(item.subtotal) }}</strong>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="flex flex-col items-center justify-center py-20 text-center space-y-4 opacity-40">
+                    <span class="text-5xl">🛍️</span>
+                    <p class="font-bold text-slate-500">Seu carrinho está <br>esperando por itens</p>
+                </div>
             {% endif %}
         </div>
 
-        <!-- COLUNA DIREITA: CARRINHO (RESUMO) -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-3xl border-2 border-slate-900 shadow-xl p-6 sticky top-8">
-                <h2 class="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                    <span>🛒</span> Resumo da Venda
-                </h2>
+        <!-- Rodapé e Ações -->
+        <div class="border-t border-slate-100 mt-6 pt-6 space-y-4">
+            <div class="flex justify-between items-end">
+                <span class="text-slate-400 font-black uppercase text-[10px] tracking-[0.2em]">Total do Pedido</span>
+                <span id="total-geral" class="text-3xl font-black text-slate-900 leading-none tracking-tight">
+                    R$ {{ total }}
+                </span>
+            </div>
 
-                <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            <!-- Botão PIX Dinâmico -->
+            <form id="form-finalizar-pix" action="/gerar_nota" method="POST" 
+                  class="{% if not orcamento %}hidden{% endif %} space-y-3 animate-in zoom-in-95 duration-300">
+                <input type="hidden" name="pagamento" value="Pix">
+                
+                <button type="submit" id="btn-pix" 
+                    class="w-full bg-slate-900 hover:bg-green-600 text-white py-5 rounded-[1.5rem] font-black text-lg shadow-xl shadow-slate-200 hover:shadow-green-200 transition-all flex items-center justify-center gap-3 active:scale-95">
+                    <span class="text-xl">⚡</span> 
+                    FINALIZAR PEDIDO
+                </button>
+
+                <a href="{{ url_for('limpar_carrinho') }}" 
+   class="block text-center text-slate-400 hover:text-red-600 transition-colors text-xs font-bold uppercase tracking-widest py-2">
+    🗑️ Esvaziar Carrinho
+</a>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+                    </div>
+
                     {% if orcamento %}
-                        {% for item in orcamento %}
-                        <div class="flex justify-between items-center group">
-                            <div class="flex items-center gap-3">
-                                <!-- Miniatura no Carrinho -->
-                                <div class="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 overflow-hidden flex-shrink-0">
-                                    {% if item.imagem %}
-                                        <img src="{{ url_for('static', filename='img/' + item.imagem) }}" class="w-full h-full object-cover">
-                                    {% else %}
-                                        <div class="w-full h-full flex items-center justify-center text-xs">📦</div>
-                                    {% endif %}
-                                </div>
-                                <div>
-                                    <p class="font-bold text-slate-800 leading-tight">{{ item.nome }}</p>
-                                    <p class="text-xs text-slate-400">{{ item.quantidade }} un x R$ {{ "%.2f"|format(item.preco|float) }}</p>
-                                </div>
-                            </div>
-                            <span class="font-bold text-slate-900 whitespace-nowrap">R$ {{ "%.2f"|format(item.subtotal) }}</span>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-12">
-                            <p class="text-slate-400 font-medium">Nenhum item adicionado</p>
-                        </div>
+                   
+
+
+
+
+                    <a href="{{ url_for('limpar_carrinho') }}"
+                       class="block text-center text-red-500 mt-2 text-sm">
+                        Limpar Carrinho
+                    </a>
                     {% endif %}
                 </div>
-
-                <!-- Total -->
-                <div class="mt-8 pt-6 border-t-2 border-dashed border-slate-100">
-                    <div class="flex justify-between items-end">
-                        <span class="text-slate-500 font-bold">Total Geral</span>
-                        <span class="text-3xl font-black text-blue-600">R$ {{ total }}</span>
-                    </div>
-                </div>
-
-                <!-- Botões de Ação -->
-                {% if orcamento %}
-                <form action="{{ url_for('gerar_nota') }}" method="POST" class="mt-8 space-y-4">
-                    <div>
-                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-2">Método de Pagamento</label>
-                        <select name="pagamento" class="w-full p-4 rounded-xl bg-slate-50 border-none font-bold text-slate-700 outline-none ring-2 ring-transparent focus:ring-blue-500 transition-all">
-                            <option value="Pix">⚡ Pix</option>
-                            <option value="Cartão">💳 Cartão de Crédito</option>
-                            <option value="Dinheiro">💵 Dinheiro</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 transition-all active:scale-95">
-                        FINALIZAR VENDA
-                    </button>
-                </form>
-                <a href="{{ url_for('limpar_carrinho') }}" class="block text-center mt-4 text-sm font-bold text-red-400 hover:text-red-600 transition-colors">
-                    Limpar Orçamento
-                </a>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
+
+<!-- 🔥 JAVASCRIPT -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // 🔥 Intercepta TODOS os forms de adicionar
+    document.querySelectorAll('form[id^="form-add-"]').forEach(form => {
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault(); // ⛔ impede reload da página
+
+            const dados = new FormData(form);
+
+            fetch("/adicionar_item", {
+                method: "POST",
+                body: dados
+            })
+            .then(res => res.json())
+            .then(data => {
+                atualizarCarrinho(data.carrinho, data.total);
+            })
+            .catch(err => console.error("Erro:", err));
+        });
+
+    });
+
+});
+
+function atualizarCarrinho(itens, total) {
+    const lista = document.getElementById('lista-carrinho');
+    const totalEl = document.getElementById('total-geral');
+    const card = document.getElementById('card-carrinho');
+    
+    // Seleciona o formulário que engloba o botão PIX
+    const formPix = document.getElementById('form-finalizar-pix');
+    const btnPix = document.getElementById('btn-pix');
+
+    if (!lista || !card) return;
+
+    // Limpa a lista atual
+    lista.innerHTML = '';
+
+    // Se o carrinho estiver vazio
+    if (itens.length === 0) {
+        lista.innerHTML = '<p class="text-center text-slate-400 py-4">Carrinho vazio</p>';
+        if (formPix) formPix.classList.add('hidden');
+        return;
+    }
+
+    // Alimenta a lista de itens
+    itens.forEach(item => {
+        lista.insertAdjacentHTML('beforeend', `
+            <div class="flex justify-between bg-slate-50 p-3 rounded-xl mb-2 border border-slate-100">
+                <span>${item.nome} (${item.quantidade}x)</span>
+                <strong class="text-slate-900">R$ ${parseFloat(item.subtotal).toFixed(2)}</strong>
+            </div>
+        `);
+    });
+
+    // Atualiza o total visual
+    totalEl.innerText = 'R$ ' + parseFloat(total).toFixed(2);
+
+    // 🔥 MOSTRA O FORMULÁRIO DE PAGAMENTO
+    // Isso é necessário para que o Python receba o campo "pagamento" via POST
+    if (formPix && itens.length > 0) {
+        formPix.classList.remove('hidden');
+        formPix.style.display = 'block'; 
+        
+        // Se você quiser que o botão apareça com algum efeito ou garantia:
+        if (btnPix) btnPix.style.display = 'block';
+    }
+
+    // Scroll suave até o carrinho
+    const y = card.getBoundingClientRect().top + window.pageYOffset - 20;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+
+    // Mantém o scroll da lista no final
+    lista.scrollTop = lista.scrollHeight;
+}
+
+
+</script>
 
 {% endblock %}

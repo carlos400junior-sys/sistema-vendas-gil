@@ -1,16 +1,91 @@
+<link href="https://unpkg.com" rel="stylesheet">
+<script src="https://unpkg.com"></script>
+<script src="https://unpkg.com"></script>
+
 {% extends "base.html" %}
 {% block conteudo %}
-<div class="card" style="max-width: 500px; margin: auto;">
-    <h2>➕ Novo Cliente</h2>
-    <form method="POST">
-        <label>Nome Completo</label>
-        <input type="text" name="nome" required style="width:100%; margin-bottom:15px; padding:10px;">
-        <label>CPF</label>
-        <input type="text" name="cpf" placeholder="000.000.000-00" required style="width:100%; margin-bottom:15px; padding:10px;">
-        <label>Telefone</label>
-        <input type="text" name="telefone" style="width:100%; margin-bottom:15px; padding:10px;">
-        <button type="submit" class="btn-pdf">💾 Salvar Cliente</button>
-    </form>
-</div>
-{% endblock %}
 
+<div class="max-w-xl mx-auto py-12 px-4">
+    <!-- Botão Voltar -->
+    <div class="mb-6" data-aos="fade-right">
+        <a href="javascript:history.back()" class="text-slate-400 hover:text-blue-600 font-bold text-sm flex items-center gap-2 transition-colors">
+            ⬅ VOLTAR PARA LISTA
+        </a>
+    </div>
+
+    <div class="bg-white rounded-[3rem] border border-slate-200 shadow-2xl overflow-hidden relative" data-aos="zoom-in">
+        <!-- Detalhe de Cor no Topo -->
+        <div class="h-3 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
+
+        <div class="p-8 md:p-12">
+            <div class="text-center mb-10">
+                <div class="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-inner">
+                    <span class="text-4xl">👤</span>
+                </div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight">Novo Cliente</h1>
+                <p class="text-slate-500 font-medium">Preencha os dados para realizar o cadastro.</p>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <!-- Nome -->
+                <div class="space-y-2" data-aos="fade-up" data-aos-delay="100">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Nome Completo</label>
+                    <div class="relative">
+                        <input type="text" name="nome" placeholder="Ex: João Silva" required 
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-700">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- CPF -->
+                    <div class="space-y-2" data-aos="fade-up" data-aos-delay="200">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">CPF</label>
+                        <input type="text" id="cpf-input" name="cpf" placeholder="000.000.000-00" required 
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-700">
+                    </div>
+
+                    <!-- Telefone -->
+                    <div class="space-y-2" data-aos="fade-up" data-aos-delay="300">
+                        <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Telefone</label>
+                        <input type="text" id="tel-input" name="telefone" placeholder="(00) 00000-0000" 
+                            class="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 px-6 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-700">
+                    </div>
+                </div>
+
+                <!-- Botão de Ação -->
+                <div class="pt-6" data-aos="fade-up" data-aos-delay="400">
+                    <button type="submit" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-slate-200 hover:bg-blue-600 hover:-translate-y-1 transition-all active:scale-95 flex items-center justify-center gap-3">
+                        <span>💾</span> SALVAR CLIENTE
+                    </button>
+                    <p class="text-center text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-4">
+                        Os dados serão armazenados de forma segura no PostgreSQL
+                    </p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Iniciar Animações
+    AOS.init({ duration: 800, once: true });
+
+    // Máscara para CPF
+    IMask(document.getElementById('cpf-input'), {
+        mask: '000.000.000-00'
+    });
+
+    // Máscara para Telefone (Celular Brasil)
+    IMask(document.getElementById('tel-input'), {
+        mask: '(00) 00000-0000'
+    });
+
+    // Efeito de "Shake" se tentar enviar vazio (Opcional)
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const btn = form.querySelector('button');
+        btn.innerHTML = "<span>⏳</span> PROCESSANDO...";
+    });
+</script>
+
+{% endblock %}

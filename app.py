@@ -669,6 +669,60 @@ def excluir_peca(id):
     # 🎯 Aqui está o segredo: redireciona para a FUNÇÃO estoque, não para o arquivo html
     return redirect(url_for('estoque'))
 
+   
+
+
+@app.route('/excluir_cliente/<int:id>')
+@login_required
+def excluir_cliente(id):
+    conn = get_db()  # Use get_db (conforme definido no seu código)
+    cur = conn.cursor()
+    try:
+        # SQL Puro para deletar
+        cur.execute("DELETE FROM clientes WHERE id = %s", (id,))
+        conn.commit()
+    except Exception as e:
+        print(f"Erro ao deletar: {e}")
+        conn.rollback()
+    finally:
+        cur.close()
+        conn.close()
+    return redirect(url_for('clientes'))
+
+@app.route('/editar_cliente/<int:id>', methods=['GET', 'POST'])
+@login_required
+def editar_cliente(id):
+    conn = get_db()
+    # Importante: RealDictCursor para o HTML entender cliente.nome
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    
+    if request.method == 'POST':
+        nome = request.form.get('nome')
+        cpf = request.form.get('cpf')
+        telefone = request.form.get('telefone')
+        
+        try:
+            cur.execute("""
+                UPDATE clientes 
+                SET nome = %s, cpf = %s, telefone = %s 
+                WHERE id = %s
+            """, (nome, cpf, telefone, id))
+            conn.commit()
+            return redirect(url_for('clientes'))
+        except Exception as e:
+            print(f"Erro ao atualizar: {e}")
+            conn.rollback()
+        finally:
+            cur.close()
+            conn.close()
+
+    # GET: Busca dados para o formulário
+    cur.execute("SELECT * FROM clientes WHERE id = %s", (id,))
+    cliente = cur.fetchone()
+    cur.close()
+    conn.close()
+    
+    return render_template('editar_cliente.html', cliente=cliente)
 
 
 

@@ -5,7 +5,7 @@
     <style>
         @page { 
             size: A4; 
-            margin: 0; /* Margem zero para controle total do fundo */
+            margin: 0; 
         }
         
         body { 
@@ -16,7 +16,6 @@
             background-color: #ffffff;
         }
 
-        /* Faixa decorativa lateral ou superior */
         .top-bar {
             height: 8px;
             background: linear-gradient(90deg, #0f172a 0%, #3b82f6 100%);
@@ -26,7 +25,6 @@
             padding: 40px;
         }
 
-        /* Cabeçalho */
         .header { 
             margin-bottom: 40px;
         }
@@ -47,7 +45,6 @@
 
         .clear { clear: both; }
 
-        /* Selo de Documento */
         .doc-badge {
             display: inline-block;
             background: #f1f5f9;
@@ -61,7 +58,6 @@
             letter-spacing: 1px;
         }
 
-        /* Resumo Principal */
         .summary-wrapper {
             margin: 30px 0;
             border: 1px solid #f1f5f9;
@@ -87,7 +83,6 @@
         }
         .summary-item span { color: #1e293b; font-weight: 700; font-size: 11pt; }
 
-        /* Tabela de Itens */
         table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
         
         th { 
@@ -110,7 +105,6 @@
         .product-name { color: #0f172a; font-weight: 700; display: block; }
         .product-sub { font-size: 8pt; color: #94a3b8; font-weight: 400; }
 
-        /* Rodapé de Pagamento */
         .footer-container { margin-top: 40px; }
         
         .payment-info { float: left; width: 50%; }
@@ -123,21 +117,45 @@
             font-size: 8.5pt;
         }
 
+        /* BOX TOTAL ATUALIZADO */
         .total-box { 
             float: right; 
             width: 220px; 
-            background: #0f172a; 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); 
             color: white; 
-            padding: 25px; 
+            padding: 20px; 
             border-radius: 20px; 
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+            text-align: right;
+            position: relative;
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.15);
         }
 
-        .total-box label { display: block; font-size: 7pt; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-bottom: 8px; letter-spacing: 1px; }
-        .total-box strong { font-size: 20pt; font-weight: 900; color: #ffffff; }
+        .total-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            margin-top: -18px;
+            width: 36px;
+            height: 36px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            display: block;
+        }
 
-        /* Rodapé Final */
+        .total-icon::after {
+            content: 'R$';
+            font-size: 9pt;
+            font-weight: 900;
+            color: #3b82f6;
+            line-height: 36px;
+            text-align: center;
+            display: block;
+            width: 100%;
+        }
+
+        .total-box label { display: block; font-size: 7pt; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; letter-spacing: 1px; }
+        .total-box strong { font-size: 20pt; font-weight: 900; color: #ffffff; display: block; }
+
         .thanks { 
             position: absolute;
             bottom: 40px;
@@ -162,7 +180,7 @@
             </div>
             <div class="company-info">
                 <h1>JML. <span style="color: #3b82f6;">Eletrônica</span></h1>
-                <p>Rua da Tecnologia, 123 - Recife/PE</p>
+                <p>Avenida caxangá , 1414   bairro:Cordeiro - Recife/PE</p>
                 <p>CNPJ: 48.998.042/0001-90</p>
                 <p><strong>Contato:</strong> (81) 97914-0738</p>
             </div>
@@ -218,6 +236,7 @@
                 </div>
             </div>
             <div class="total-box">
+                <div class="total-icon"></div>
                 <label>Total a Pagar</label>
                 <strong>R$ {{ total }}</strong>
             </div>
@@ -231,4 +250,3 @@
     </div>
 </body>
 </html>
-

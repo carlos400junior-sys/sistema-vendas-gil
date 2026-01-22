@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block conteudo %}
+<!-- 1. Importando o "motor" do Tailwind e Animações para garantir que funcione -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com"/>
+
+<div class="max-w-2xl mx-auto py-10 px-4 animate__animated animate__zoomIn animate__faster">
+    <h1 class="text-4xl font-black mb-8 text-slate-800 tracking-tighter">
+        Editar Cliente<span class="text-blue-600">.</span>
+    </h1>
+    
+    <!-- Card com sombra intensa e borda suave -->
+    <form method="POST" id="editForm" class="bg-white p-10 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 transition-all duration-500">
+        
+        <div class="mb-6">
+            <label class="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2 ml-1">Nome Completo</label>
+            <input type="text" name="nome" value="{{ cliente.nome }}" 
+                   class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-0 outline-none transition-all duration-300 text-slate-700 font-medium"
+                   placeholder="Ex: João Silva">
+        </div>
+
+        <div class="mb-10">
+            <label class="block text-xs uppercase tracking-widest text-slate-400 font-bold mb-2 ml-1">CPF</label>
+            <input type="text" name="cpf" value="{{ cliente.cpf }}" 
+                   class="w-full p-4 bg-slate-50 border-2 border-transparent rounded-2xl focus:bg-white focus:border-blue-500 focus:ring-0 outline-none transition-all duration-300 text-slate-700 font-medium"
+                   placeholder="000.000.000-00">
+        </div>
+        
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button type="submit" id="btnSalvar"
+                    class="flex-1 bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 hover:scale-[1.02] active:scale-95 transition-all shadow-lg shadow-blue-200">
+                Confirmar Alterações
+            </button>
+            
+            <a href="{{ url_for('clientes') }}" 
+               class="px-8 py-4 rounded-2xl font-bold text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all text-center">
+                Voltar
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Animação Java(Script) para o botão ao enviar
+    const form = document.getElementById('editForm');
+    const btn = document.getElementById('btnSalvar');
+
+    form.onsubmit = function() {
+        btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-3 border-2 border-white border-t-transparent rounded-full inline" viewBox="0 0 24 24"></svg> Salvando...`;
+        btn.style.pointerEvents = 'none';
+        btn.style.opacity = '0.7';
+    };
+</script>
+{% endblock %}

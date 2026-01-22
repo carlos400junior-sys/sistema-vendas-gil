@@ -725,6 +725,43 @@ def editar_cliente(id):
     return render_template('editar_cliente.html', cliente=cliente)
 
 
+@app.route('/lojacliente')
+def lojacliente():
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+            SELECT id, nome, preco, foto 
+            FROM pecas 
+            WHERE quantidade > 0
+            ORDER BY id DESC
+        """)
+        produtos = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        # Carrinho do cliente (sessão)
+        carrinho = session.get('orcamento', [])
+        total = sum(
+            float(item.get('preco', 0)) * int(item.get('quantidade', 1))
+            for item in carrinho
+        )
+
+        return render_template(
+            'lojacliente.html',
+            produtos=produtos,
+            carrinho=carrinho,
+            total=f"{total:.2f}"
+        )
+
+    except Exception as e:
+        print(f"Erro na rota /lojacliente: {e}")
+        return "Erro ao carregar a loja", 500
+
+
+
 
 if __name__ == "__main__":
     app.run(port=5002, debug=True, use_reloader=False)	

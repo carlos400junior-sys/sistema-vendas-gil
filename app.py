@@ -10,6 +10,7 @@ from flask import request, jsonify
 import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
+from urllib.parse import quote
 
 
 app = Flask(__name__)
@@ -260,6 +261,9 @@ def gerar_nota():
     cliente = session.get('cliente_selecionado', 'Consumidor Final')
     total = sum(float(i['subtotal']) for i in itens)
     pagamento = request.form.get('pagamento')
+    tecnico = request.form.get('tecnico', 'Não informado')
+    session['tecnico'] = tecnico
+
     valor_str = f"{total:.2f}"
 
     # --- CORREÇÃO PARA POSTGRES ---
@@ -295,7 +299,7 @@ def gerar_nota():
         logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
         html = render_template('nota_fiscal.html', itens=itens, total=valor_str, 
                                logo=logo, numero_nota=numero, 
-                               data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente)
+                               data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente,tecnico=tecnico)
         pdf = HTML(string=html).write_pdf()
         
         session.pop('carrinho', None)
@@ -760,6 +764,39 @@ def lojacliente():
         print(f"Erro na rota /lojacliente: {e}")
         return "Erro ao carregar a loja", 500
 
+
+from urllib.parse import quote
+from flask import redirect, session, url_for
+
+@app.route("/checkout_whatsapp")
+def checkout_whatsapp():
+    orcamento = session.get("orcamento", [])
+    cliente = session.get("cliente_selecionado", "Consumidor Final")
+
+    if not orcamento:
+        return redirect(url_for("orcamento"))
+
+    mensagem = f"🛒 *NOVO PEDIDO*\n\n👤 Cliente: {cliente}\n\n"
+
+    total = 0
+    for item in orcamento:
+        mensagem += (
+            f"• {item['nome']} "
+            f"({item['quantidade']}x) - "
+            f"R$ {item['subtotal']:.2f}\n"
+        )
+        total += item["subtotal"]
+
+    mensagem += f"\n💰 *Total:* R$ {total:.2f}"
+
+    mensagem = quote(mensagem)
+
+    whatsapp_url = (
+        "https://wa.me/5581991644068"
+        f"?text={mensagem}"
+    )
+
+    return redirect(whatsapp_url)
 
 
 

@@ -150,6 +150,22 @@
             <form id="form-finalizar-pix" action="/gerar_nota" method="POST" 
                   class="{% if not orcamento %}hidden{% endif %} space-y-3 animate-in zoom-in-95 duration-300">
                 <input type="hidden" name="pagamento" value="Pix">
+                <!-- Nome do Técnico (OBRIGATÓRIO) -->
+<div class="space-y-2">
+    <label class="text-xs font-black uppercase tracking-widest text-slate-400">
+        Técnico responsável
+    </label>
+    <input 
+        type="text"
+        name="tecnico"
+        required
+        placeholder="Digite o nome do técnico"
+        class="w-full rounded-2xl px-4 py-3 text-slate-800 font-semibold 
+               border border-slate-200 focus:ring-2 focus:ring-blue-500 
+               focus:outline-none transition-all"
+    >
+</div>
+
                 
                 <button type="submit" id="btn-pix" 
                     class="w-full bg-slate-900 hover:bg-green-600 text-white py-5 rounded-[1.5rem] font-black text-lg shadow-xl shadow-slate-200 hover:shadow-green-200 transition-all flex items-center justify-center gap-3 active:scale-95">

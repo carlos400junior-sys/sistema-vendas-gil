@@ -15,71 +15,44 @@
             <span class="text-2xl font-black text-blue-600">R$ {{ data.total }}</span>
         </p>
 
-        <!-- ABAS DE SELEÇÃO PIX/CARTÃO -->
-        <div class="flex gap-2 p-1 bg-slate-100 rounded-2xl mb-8" data-aos="fade-up" data-aos-delay="400">
-            <button onclick="setTab('pix')" id="btn-pix" class="flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 bg-white shadow-sm text-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">⚡ PIX</button>
-            <button onclick="setTab('card')" id="btn-card" class="flex-1 py-3 rounded-xl font-bold text-sm transition-all duration-300 text-slate-500 hover:bg-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500">💳 CARTÃO</button>
-        </div>
-        
-        <!-- CONTEÚDO DO PIX (Visível por padrão) -->
-        <div id="pix-content" class="transition-opacity duration-300 ease-in-out">
-            <!-- QR CODE -->
-            <div class="bg-slate-50 p-6 md:p-8 rounded-[2rem] border-2 border-dashed border-slate-200 mb-8">
-                <div class="w-56 h-56 bg-white mx-auto rounded-2xl flex items-center justify-center p-2 shadow-inner transform hover:scale-105 transition-transform duration-300">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?data={{ data.payload|urlencode }}" 
-                         alt="QR Code Pix" 
-                         class="w-full h-full object-contain">
-                </div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Escaneie o código acima com o app do seu banco</p>
-            </div>
-
-            <div class="text-left mb-8">
-                <label class="text-xs font-black text-slate-400 uppercase mb-2 block ml-2">Pix Copia e Cola</label>
-                <div class="relative group">
-                    <input type="text" id="pixCode" readonly value="{{ data.payload }}" 
-                        class="w-full bg-slate-100 border-none rounded-2xl py-4 px-6 pr-24 font-mono text-sm text-slate-600 outline-none ring-2 ring-transparent focus:ring-blue-500/20 transition-all">
-                    <button onclick="copiarPix()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-600 transition-all transform hover:scale-105">
-                        COPIAR
-                    </button>
-                </div>
-            </div>
-        </div>
-        <!-- FIM CONTEÚDO PIX -->
-
-        <!-- CONTEÚDO DO CARTÃO (Oculto por padrão) -->
-        <div id="card-section" class="hidden text-left space-y-4 transition-opacity duration-300 ease-in-out">
-            <form id="payment-form" class="space-y-4">
-                <!-- Seus campos de cartão com estilo Tailwind -->
-                 <div>
-                    <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Nome no Cartão</label>
-                    <input type="text" placeholder="Seu Nome Completo" class="input-field">
-                </div>
-                <div>
-                    <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Número do Cartão</label>
-                    <input type="text" placeholder="0000 0000 0000 0000" class="input-field">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">Validade</label>
-                        <input type="text" placeholder="MM/AA" class="input-field">
-                    </div>
-                    <div>
-                        <label class="text-xs font-black text-slate-400 uppercase mb-1 block ml-2">CVV</label>
-                        <input type="text" placeholder="123" class="input-field">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-lg shadow-lg hover:bg-blue-700 transition-all transform hover:scale-105">
-                    FINALIZAR PAGAMENTO
-                </button>
-            </form>
-        </div>
-        <!-- FIM CONTEÚDO CARTÃO -->
+    
+     
 
 
-        <div class="grid grid-cols-1 gap-4 mt-8">
+    
+            <h2 class="text-2xl font-black text-slate-900">
+                Finalizar pelo WhatsApp
+            </h2>
+
+            <p class="text-slate-500">
+                Envie seu pedido direto para nosso atendimento.
+            </p>
+
+            <a href="{{ url_for('checkout_whatsapp') }}"
+               class="w-full bg-green-600 hover:bg-green-700 text-white py-5
+                      rounded-[1.5rem] font-black text-lg shadow-xl
+                      transition-all flex items-center justify-center gap-3 active:scale-95">
+
+                <span class="text-2xl">📲</span>
+                ENVIAR PEDIDO NO WHATSAPP
+            </a>
+                <div class="grid grid-cols-1 gap-4 mt-8">
             <a href="/baixar_pdf/{{ data.numero_nota }}" class="w-full bg-slate-900 text-white py-5 rounded-2xl font-black text-lg flex items-center justify-center gap-3 shadow-xl hover:bg-blue-600 transition-all transform hover:scale-105">
                 <span>📄</span> BAIXAR NOTA FISCAL
             </a>
+            <div class="space-y-6">
+            <div class="w-20 h-20 bg-green-50 rounded-3xl flex items-center justify-center mx-auto rotate-3 border border-green-100 shadow-md">
+                <span class="text-4xl">💬</span>
+            </div>
+
+            <a href="{{ url_for('limpar_carrinho') }}"
+               class="block text-center text-slate-400 hover:text-red-600 transition-colors text-xs font-bold uppercase tracking-widest pt-4">
+                🗑️ Cancelar pedido
+            </a>
+        </div>
+
+    </div>
+</div>
             <a href="/" class="text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest mt-4">
                 Voltar ao Início
             </a>

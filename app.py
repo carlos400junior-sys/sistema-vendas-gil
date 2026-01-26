@@ -271,8 +271,8 @@ def gerar_nota():
     cur = conn.cursor()
     try:
         cur.execute(
-            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome) VALUES (%s, %s, %s, %s, %s)",
-            (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente)
+            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome,tecnico) VALUES (%s, %s, %s, %s, %s,%s)",
+            (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente,tecnico)
         )
         conn.commit() # Salva no banco
     except Exception as e:
@@ -291,7 +291,7 @@ def gerar_nota():
             cidade="RECIFE",
             valor=total
         )
-        session['pix_data'] = {'payload': payload_pix, 'total': valor_str, 'numero_nota': numero}
+        session['pix_data'] = {'payload': payload_pix, 'total': valor_str, 'numero_nota': numero, 'tecnico': tecnico}
         return redirect(url_for('confirmacao_pix'))
 
     # Para outros pagamentos, gera o PDF
@@ -473,33 +473,48 @@ def limpar_carrinho():
 @app.route('/reimprimir_nota/<int:id>')
 def reimprimir_nota(id):
     conn = get_db()
-    # Busca os dados da nota salvos no banco pelo ID
-    nota = conn.execute("SELECT * FROM notas WHERE id = ?", (id,)).fetchone()
-    conn.close()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    if nota:
-        # Converte o JSON de volta para lista de dicionários do Python
-        itens = json.loads(nota['itens_json'])
-        logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
-        
-        # Renderiza o mesmo HTML usado na geração original
-        html = render_template('nota_fiscal.html', 
-                               itens=itens, 
-                               total=f"{nota['total']:.2f}", 
-                               logo=logo, 
-                               numero_nota=nota['numero_nota'], 
-                               data=nota['data_emissao'].split()[0], # Pega apenas a data
-                               cliente=nota['cliente_nome'])
-        
-        # Gera o PDF usando WeasyPrint
-        pdf = HTML(string=html, base_url=os.path.dirname(__file__)).write_pdf()
-        
-        return send_file(io.BytesIO(pdf), 
-                         mimetype='application/pdf', 
-                         as_attachment=True, 
-                         download_name=f"nota_{nota['numero_nota']}.pdf")
-    
-    return "Nota não encontrada", 404
+    try:
+        cur.execute(
+            "SELECT * FROM notas WHERE id = %s",
+            (id,)
+        )
+        nota = cur.fetchone()
+    finally:
+        cur.close()
+        conn.close()
+
+    if not nota:
+        return "Nota não encontrada", 404
+
+    # Converte o JSON salvo no banco
+    itens = json.loads(nota['itens_json'])
+
+    logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
+
+    html = render_template(
+        'nota_fiscal.html',
+        itens=itens,
+        total=f"{nota['total']:.2f}",
+        logo=logo,
+        numero_nota=nota['numero_nota'],
+        data=nota['data_emissao'].split()[0],
+        cliente=nota['cliente_nome'],
+         tecnico=nota.get['tecnico', 'não informado'],
+    )
+
+    pdf = HTML(
+        string=html,
+        base_url=app.root_path
+    ).write_pdf()
+
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f"nota_{nota['numero_nota']}.pdf"
+    )
 
 @app.route('/loja')
 def loja():
@@ -559,7 +574,8 @@ def baixar_pdf(numero_nota):
                                logo=logo, 
                                numero_nota=nota['numero_nota'], 
                                data=nota['data_emissao'], 
-                               cliente=nota['cliente_nome'])
+                               cliente=nota['cliente_nome'],
+                                tecnico=nota['tecnico']) 
         
         # Gera o PDF usando o WeasyPrint importado no topo
         pdf_gerado = HTML(string=html).write_pdf()
@@ -768,6 +784,8 @@ def lojacliente():
 from urllib.parse import quote
 from flask import redirect, session, url_for
 
+from urllib.parse import quote
+
 @app.route("/checkout_whatsapp")
 def checkout_whatsapp():
     orcamento = session.get("orcamento", [])
@@ -789,12 +807,10 @@ def checkout_whatsapp():
 
     mensagem += f"\n💰 *Total:* R$ {total:.2f}"
 
-    mensagem = quote(mensagem)
+    # Escapar os espaços e caracteres especiais na mensagem
+    mensagem_escapada = quote(mensagem)
 
-    whatsapp_url = (
-        "https://wa.me/5581991644068"
-        f"?text={mensagem}"
-    )
+    whatsapp_url = f"https://wa.me/5581991644068?text={mensagem_escapada}"
 
     return redirect(whatsapp_url)
 

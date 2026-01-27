@@ -30,8 +30,7 @@
                 <td class="px-6 py-4">
                     <div class="flex items-center gap-4">
                         <div class="w-14 h-14 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
-                            <!-- Exibe a foto da peça -->
-                            <img src="{{ peca.foto if peca.foto else url_for('static', filename='img/default.png') }}" 
+                            <img src="{{ url_for('static', filename='uploads/' + peca.foto) if peca.foto else url_for('static', filename='img/default.png') }}" 
                                  class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                         </div>
                         <div>
@@ -77,14 +76,6 @@
                     <p class="text-slate-400 font-bold">Seu estoque está vazio no momento.</p>
                 </td>
             </tr>
-            {% for peca in pecas %}
-    <tr>
-        <td>
-            <img src="{{ peca.foto }}" alt="{{ peca.nome }}">
-        </td>
-    </tr>
-{% endfor %}
-
             {% endfor %}
         </tbody>
     </table>

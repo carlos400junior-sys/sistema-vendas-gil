@@ -13,15 +13,10 @@ from psycopg2.extras import RealDictCursor
 from urllib.parse import quote
 import cloudinary
 import cloudinary.uploader
-from dotenv import load_dotenv
-load_dotenv()  # Carrega as variáveis do arquivo .env
-
 
 
 app = Flask(__name__)
 from functools import wraps
-
-# Carrega as variáveis do arquivo .env
 
 def login_required(f):
     @wraps(f)
@@ -37,24 +32,6 @@ DB_NAME = "database.db"
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-import os
-
-# Imprima a variável CLOUDINARY_URL para verificar se está correta
-print("CLOUDINARY_URL:", os.environ.get("CLOUDINARY_URL"))
-
-
-# Configuração do Cloudinary
- 
-print("CLOUDINARY_URL:", os.environ.get("CLOUDINARY_URL"))  # Isso vai imprimir no console
-
-# Configuração do Cloudinary usando a variável de ambiente CLOUDINARY_URL
-cloudinary.config(
-    cloudinary_url=os.environ.get("CLOUDINARY_URL")
-)
-
-
-
 def criar_tabelas():
     with get_db() as conn:
         # ... (suas tabelas de peças e notas) ...
@@ -182,6 +159,7 @@ from psycopg2.extras import RealDictCursor # Adicione este import no topo!
 @login_required
 def estoque():
     conn = get_db()
+    # Usamos RealDictCursor para poder acessar os dados no HTML como peça['nome']
     cur = conn.cursor(cursor_factory=RealDictCursor) 
     
     cur.execute("SELECT * FROM pecas ORDER BY id DESC")
@@ -192,53 +170,34 @@ def estoque():
     return render_template("index.html", pecas=pecas)
 
 
-
 @app.route("/cadastrar", methods=["GET", "POST"])
 def cadastrar():
     if request.method == "POST":
         f = request.files.get('foto')
-        foto_url = None
-
-        # Verifique se o arquivo foi enviado
-        if f and f.filename:
-            try:
-                # Realize o upload para o Cloudinary
-                upload = cloudinary.uploader.upload(
-                    f,
-                    folder="pecas",  # Pasta onde a imagem será salva
-                    resource_type="image",  # Tipicamente imagens
-                    transformation={
-                        "fetch_format": "auto",  # f_auto
-                        "quality": "auto"        # q_auto
-                    }
-                )
-                foto_url = upload["secure_url"]  # URL da imagem no Cloudinary
-            except Exception as e:
-                print(f"Erro ao fazer upload para o Cloudinary: {e}")
-                foto_url = None  # Caso haja erro no upload
-
-        # Conectar ao banco de dados e salvar as informações
+        nome_foto = "default.png"
+        if f and f.filename != '':
+            nome_foto = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{f.filename}")
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], nome_foto))
+        
         conn = get_db()
-        cur = conn.cursor()
+        cur = conn.cursor() # VOCÊ PRECISA DISSO
         try:
+            # 1. Use cur.execute (não conn.execute)
+            # 2. Use %s (não ?)
             cur.execute("""
-                INSERT INTO pecas (nome, categoria, preco, quantidade, foto)
+                INSERT INTO pecas (nome, categoria, preco, quantidade, foto) 
                 VALUES (%s, %s, %s, %s, %s)
-            """, (
-                request.form["nome"],
-                request.form["categoria"],
-                request.form["preco"],
-                request.form["quantidade"],
-                foto_url  # Salvando a URL da imagem no Cloudinary
-            ))
-            conn.commit()  # OBRIGATÓRIO no Postgres
+            """, (request.form["nome"], request.form["categoria"], 
+                  request.form["preco"], request.form["quantidade"], nome_foto))
+            
+            conn.commit() # OBRIGATÓRIO no Postgres
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao salvar peça no banco: {e}")
+            print(f"Erro ao salvar peça: {e}")
         finally:
             cur.close()
             conn.close()
-
+            
         return redirect(url_for("estoque"))
     return render_template("cadastrar.html")
 
@@ -906,7 +865,7 @@ def checkout_whatsapp():
     # Escapar os espaços e caracteres especiais na mensagem
     mensagem_escapada = quote(mensagem)
 
-    whatsapp_url = f"https://wa.me/5581991644068?text={mensagem_escapada}"
+    whatsapp_url = f"https://wa.me/5581979140738?text={mensagem_escapada}"
 
     return redirect(whatsapp_url)
 

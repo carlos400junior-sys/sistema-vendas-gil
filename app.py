@@ -11,10 +11,17 @@ import psycopg2
 from psycopg2 import sql
 from psycopg2.extras import RealDictCursor
 from urllib.parse import quote
+import cloudinary
+import cloudinary.uploader
+from dotenv import load_dotenv
+load_dotenv()  # Carrega as variáveis do arquivo .env
+
 
 
 app = Flask(__name__)
 from functools import wraps
+
+# Carrega as variáveis do arquivo .env
 
 def login_required(f):
     @wraps(f)
@@ -30,6 +37,24 @@ DB_NAME = "database.db"
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+import os
+
+# Imprima a variável CLOUDINARY_URL para verificar se está correta
+print("CLOUDINARY_URL:", os.environ.get("CLOUDINARY_URL"))
+
+
+# Configuração do Cloudinary
+ 
+print("CLOUDINARY_URL:", os.environ.get("CLOUDINARY_URL"))  # Isso vai imprimir no console
+
+# Configuração do Cloudinary usando a variável de ambiente CLOUDINARY_URL
+cloudinary.config(
+    cloudinary_url=os.environ.get("CLOUDINARY_URL")
+)
+
+
+
 def criar_tabelas():
     with get_db() as conn:
         # ... (suas tabelas de peças e notas) ...
@@ -157,7 +182,6 @@ from psycopg2.extras import RealDictCursor # Adicione este import no topo!
 @login_required
 def estoque():
     conn = get_db()
-    # Usamos RealDictCursor para poder acessar os dados no HTML como peça['nome']
     cur = conn.cursor(cursor_factory=RealDictCursor) 
     
     cur.execute("SELECT * FROM pecas ORDER BY id DESC")
@@ -168,34 +192,53 @@ def estoque():
     return render_template("index.html", pecas=pecas)
 
 
+
 @app.route("/cadastrar", methods=["GET", "POST"])
 def cadastrar():
     if request.method == "POST":
         f = request.files.get('foto')
-        nome_foto = "default.png"
-        if f and f.filename != '':
-            nome_foto = secure_filename(f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{f.filename}")
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], nome_foto))
-        
+        foto_url = None
+
+        # Verifique se o arquivo foi enviado
+        if f and f.filename:
+            try:
+                # Realize o upload para o Cloudinary
+                upload = cloudinary.uploader.upload(
+                    f,
+                    folder="pecas",  # Pasta onde a imagem será salva
+                    resource_type="image",  # Tipicamente imagens
+                    transformation={
+                        "fetch_format": "auto",  # f_auto
+                        "quality": "auto"        # q_auto
+                    }
+                )
+                foto_url = upload["secure_url"]  # URL da imagem no Cloudinary
+            except Exception as e:
+                print(f"Erro ao fazer upload para o Cloudinary: {e}")
+                foto_url = None  # Caso haja erro no upload
+
+        # Conectar ao banco de dados e salvar as informações
         conn = get_db()
-        cur = conn.cursor() # VOCÊ PRECISA DISSO
+        cur = conn.cursor()
         try:
-            # 1. Use cur.execute (não conn.execute)
-            # 2. Use %s (não ?)
             cur.execute("""
-                INSERT INTO pecas (nome, categoria, preco, quantidade, foto) 
+                INSERT INTO pecas (nome, categoria, preco, quantidade, foto)
                 VALUES (%s, %s, %s, %s, %s)
-            """, (request.form["nome"], request.form["categoria"], 
-                  request.form["preco"], request.form["quantidade"], nome_foto))
-            
-            conn.commit() # OBRIGATÓRIO no Postgres
+            """, (
+                request.form["nome"],
+                request.form["categoria"],
+                request.form["preco"],
+                request.form["quantidade"],
+                foto_url  # Salvando a URL da imagem no Cloudinary
+            ))
+            conn.commit()  # OBRIGATÓRIO no Postgres
         except Exception as e:
             conn.rollback()
-            print(f"Erro ao salvar peça: {e}")
+            print(f"Erro ao salvar peça no banco: {e}")
         finally:
             cur.close()
             conn.close()
-            
+
         return redirect(url_for("estoque"))
     return render_template("cadastrar.html")
 
@@ -254,36 +297,63 @@ def historico():
 @app.route('/gerar_nota', methods=['POST'])
 def gerar_nota():
     itens = session.get('carrinho') or session.get('orcamento', [])
-    if not itens: 
+    if not itens:
         return redirect(url_for('orcamento'))
-    
+
     numero = datetime.now().strftime("%Y%m%d%H%M%S")
     cliente = session.get('cliente_selecionado', 'Consumidor Final')
     total = sum(float(i['subtotal']) for i in itens)
     pagamento = request.form.get('pagamento')
     tecnico = request.form.get('tecnico', 'Não informado')
-    session['tecnico'] = tecnico
 
     valor_str = f"{total:.2f}"
 
-    # --- CORREÇÃO PARA POSTGRES ---
     conn = get_db()
     cur = conn.cursor()
+
     try:
-        cur.execute(
-            "INSERT INTO notas (numero_nota, data_emissao, total, itens_json, cliente_nome,tecnico) VALUES (%s, %s, %s, %s, %s,%s)",
-            (numero, datetime.now().strftime("%d/%m/%Y %H:%M"), total, json.dumps(itens), cliente,tecnico)
-        )
-        conn.commit() # Salva no banco
+        # 1️⃣ SALVA A NOTA
+        cur.execute("""
+            INSERT INTO notas 
+            (numero_nota, data_emissao, total, itens_json, cliente_nome, tecnico)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """, (
+            numero,
+            datetime.now().strftime("%d/%m/%Y %H:%M"),
+            total,
+            json.dumps(itens),
+            cliente,
+            tecnico
+        ))
+
+        # 2️⃣ BAIXA NO ESTOQUE (COM PROTEÇÃO)
+        for item in itens:
+            cur.execute("""
+                UPDATE pecas
+                SET quantidade = quantidade - %s
+                WHERE nome = %s
+                  AND quantidade >= %s
+            """, (
+                item['quantidade'],
+                item['nome'],
+                item['quantidade']
+            ))
+
+            if cur.rowcount == 0:
+                raise Exception(f"Estoque insuficiente para {item['nome']}")
+
+        conn.commit()  # 🔥 salva tudo de uma vez
+
     except Exception as e:
         conn.rollback()
-        print(f"Erro ao salvar nota: {e}")
-        return "Erro ao processar venda", 500
+        print(f"Erro ao gerar nota: {e}")
+        return f"Erro ao gerar nota: {e}", 500
+
     finally:
         cur.close()
         conn.close()
-    # ------------------------------
 
+    # 3️⃣ FLUXO DE PAGAMENTO
     if pagamento == 'Pix':
         payload_pix = gerar_payload_pix(
             chave="carlinha14.fernandes@gmail.com",
@@ -291,24 +361,50 @@ def gerar_nota():
             cidade="RECIFE",
             valor=total
         )
-        session['pix_data'] = {'payload': payload_pix, 'total': valor_str, 'numero_nota': numero, 'tecnico': tecnico}
+
+        session['pix_data'] = {
+            'payload': payload_pix,
+            'total': valor_str,
+            'numero_nota': numero,
+            'tecnico': tecnico
+        }
+
+        # limpa carrinho
+        session.pop('carrinho', None)
+        session.pop('orcamento', None)
+
         return redirect(url_for('confirmacao_pix'))
 
-    # Para outros pagamentos, gera o PDF
+    # 4️⃣ GERA PDF (OUTROS PAGAMENTOS)
     try:
         logo = os.path.join(app.root_path, 'static', 'img', 'logo.jpg')
-        html = render_template('nota_fiscal.html', itens=itens, total=valor_str, 
-                               logo=logo, numero_nota=numero, 
-                               data=datetime.now().strftime("%d/%m/%Y"), cliente=cliente,tecnico=tecnico)
-        pdf = HTML(string=html).write_pdf()
-        
-        session.pop('carrinho', None)
-        return send_file(io.BytesIO(pdf), mimetype='application/pdf', 
-                         as_attachment=True, download_name=f'nota_{numero}.pdf')
-    except Exception as e:
-        print(f"Erro PDF: {e}")
-        return redirect(url_for('orcamento'))
 
+        html = render_template(
+            'nota_fiscal.html',
+            itens=itens,
+            total=valor_str,
+            logo=logo,
+            numero_nota=numero,
+            data=datetime.now().strftime("%d/%m/%Y"),
+            cliente=cliente,
+            tecnico=tecnico
+        )
+
+        pdf = HTML(string=html, base_url=app.root_path).write_pdf()
+
+        session.pop('carrinho', None)
+        session.pop('orcamento', None)
+
+        return send_file(
+            io.BytesIO(pdf),
+            mimetype='application/pdf',
+            as_attachment=True,
+            download_name=f'nota_{numero}.pdf'
+        )
+
+    except Exception as e:
+        print(f"Erro ao gerar PDF: {e}")
+        return redirect(url_for('orcamento'))
 
 
 
@@ -501,7 +597,7 @@ def reimprimir_nota(id):
         numero_nota=nota['numero_nota'],
         data=nota['data_emissao'].split()[0],
         cliente=nota['cliente_nome'],
-         tecnico=nota.get['tecnico', 'não informado'],
+        tecnico=nota.get('tecnico', 'Não informado')  # ✅ CORREÇÃO AQUI
     )
 
     pdf = HTML(
@@ -813,6 +909,8 @@ def checkout_whatsapp():
     whatsapp_url = f"https://wa.me/5581991644068?text={mensagem_escapada}"
 
     return redirect(whatsapp_url)
+
+
 
 
 

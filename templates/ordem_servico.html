@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block conteudo %}
+
+<div class="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8 animate-in fade-in duration-700">
+
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-black text-slate-800">
+            🛠 Ordem de Serviço
+        </h1>
+
+        <span class="px-4 py-2 rounded-full bg-blue-100 text-blue-700 font-bold text-sm">
+            Nova OS
+        </span>
+    </div>
+
+    <form action="{{ url_for('gerar_ordem_servico') }}" method="POST" class="space-y-6">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+            <div>
+                <label class="block text-sm font-bold text-slate-600 mb-1">Cliente</label>
+                <input name="cliente" required
+                       class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-600 mb-1">Técnico Responsável</label>
+                <input name="tecnico" required
+                       class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-600 mb-1">Equipamento</label>
+                <input name="equipamento" required
+                       class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-slate-600 mb-1">Defeito Relatado</label>
+                <input name="defeito" required
+                       class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+        </div>
+
+        <div>
+            <label class="block text-sm font-bold text-slate-600 mb-1">Serviço Executado</label>
+            <textarea name="servico" rows="4"
+                      class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-bold text-slate-600 mb-1">Valor (R$)</label>
+                <input type="number" step="0.01" name="valor" required
+                       class="w-full rounded-xl border-slate-300 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-4 pt-6 border-t">
+            <a href="/" class="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100">
+                Cancelar
+            </a>
+
+            <button type="submit"
+                    class="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-lg">
+                Gerar Ordem de Serviço
+            </button>
+        </div>
+
+    </form>
+</div>
+
+{% endblock %}

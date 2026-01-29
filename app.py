@@ -870,6 +870,30 @@ def checkout_whatsapp():
     return redirect(whatsapp_url)
 
 
+@app.route("/ordem_servico")
+@login_required
+def ordem_servico():
+    return render_template("ordem_servico.html")
+
+
+@app.route("/gerar_ordem_servico", methods=["POST"])
+@login_required
+def gerar_ordem_servico():
+    return render_template(
+        "ordem_servico_pdf.html",
+        cliente=request.form["cliente"],
+        tecnico=request.form["tecnico"],
+        equipamento=request.form["equipamento"],
+        defeito=request.form["defeito"],
+        servico=request.form["servico"],
+        valor=f"{float(request.form['valor']):.2f}",
+        numero_os=datetime.now().strftime("%Y%m%d%H%M"),
+        data=datetime.now().strftime("%d/%m/%Y"),
+      
+    )
+
+
+
 
 
 

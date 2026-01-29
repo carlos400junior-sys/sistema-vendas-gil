@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block conteudo %}
+
+<style>
+/* === IMPRESSÃO = TELA === */
+@media print {
+    aside,
+    header,
+    #btn-imprimir {
+        display: none !important;
+    }
+
+    main {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    body {
+        background: white !important;
+    }
+}
+</style>
+
+<div class="max-w-4xl mx-auto bg-white border border-slate-300 rounded-xl shadow-lg">
+
+    <!-- CABEÇALHO -->
+    <div class="border-b border-slate-300 p-8 flex justify-between items-center">
+        <div class="flex items-center gap-4">
+            <img src="{{ url_for('static', filename='img/logo.jpg') }}" class="h-14">
+
+            <div>
+                <h1 class="text-xl font-bold uppercase tracking-wide">
+                    Ordem de Serviço
+                </h1>
+                <p class="text-xs text-slate-500 tracking-widest">
+                    Nº {{ numero_os }}
+                </p>
+            </div>
+        </div>
+
+        <div class="text-right text-xs text-slate-600 leading-snug">
+            <p class="font-semibold text-slate-800">JM Eletrônica LTDA</p>
+            <p>CNPJ: 48.998.042/0001-90</p>
+            <p>Emissão: {{ data }}</p>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO -->
+    <div class="p-8 space-y-7 text-sm">
+
+        <!-- CLIENTE -->
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                Cliente
+            </label>
+            <div class="border border-slate-300 rounded-lg px-4 py-3 font-medium bg-slate-50">
+                {{ cliente }}
+            </div>
+        </div>
+
+        <!-- GRID -->
+        <div class="grid grid-cols-2 gap-6">
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                    Técnico
+                </label>
+                <div class="border border-slate-300 rounded-lg px-4 py-3 bg-slate-50">
+                    {{ tecnico }}
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                    Equipamento
+                </label>
+                <div class="border border-slate-300 rounded-lg px-4 py-3 bg-slate-50">
+                    {{ equipamento }}
+                </div>
+            </div>
+        </div>
+
+        <!-- DEFEITO -->
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                Defeito Relatado
+            </label>
+            <div class="border border-slate-300 rounded-lg px-4 py-4 bg-slate-50 min-h-[90px] whitespace-pre-line">
+                {{ defeito }}
+            </div>
+        </div>
+
+        <!-- SERVIÇO -->
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-1">
+                Serviço Executado
+            </label>
+            <div class="border border-slate-300 rounded-lg px-4 py-4 bg-slate-50 min-h-[90px] whitespace-pre-line">
+                {{ servico }}
+            </div>
+        </div>
+
+        <!-- VALOR -->
+        <div class="flex justify-end pt-4">
+            <div class="border border-slate-800 rounded-lg px-8 py-4 text-right bg-white">
+                <p class="text-xs text-slate-500 uppercase tracking-widest">
+                    Valor Total
+                </p>
+                <p class="text-2xl font-bold text-slate-900">
+                    R$ {{ valor }}
+                </p>
+            </div>
+        </div>
+
+        <!-- ASSINATURAS -->
+        <div class="grid grid-cols-2 gap-12 pt-16">
+            <div class="text-center">
+                <div class="border-t border-slate-400 pt-2"></div>
+                <p class="text-xs text-slate-600 mt-1">
+                    Assinatura do Cliente
+                </p>
+            </div>
+
+            <div class="text-center">
+                <div class="border-t border-slate-400 pt-2"></div>
+                <p class="text-xs text-slate-600 mt-1">
+                    Assinatura do Técnico
+                </p>
+            </div>
+        </div>
+
+        <!-- BOTÃO -->
+        <div class="flex justify-center pt-10">
+            <button
+                id="btn-imprimir"
+                onclick="window.print()"
+                class="px-10 py-3 border border-slate-800 rounded-lg font-semibold hover:bg-slate-900 hover:text-white transition"
+            >
+                Imprimir Ordem de Serviço
+            </button>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
